@@ -3,76 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Jardín del Conejo</title>
+    <title>Bajo la Luz de la Luna</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Montserrat:wght@300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Quicksand:wght@300&display=swap');
 
         body {
             margin: 0;
             overflow: hidden;
-            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
-            font-family: 'Montserrat', sans-serif;
+            background: #050510; /* Fondo base muy oscuro */
+            font-family: 'Quicksand', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
         canvas { display: block; }
         
+        /* UI Elegante */
         #ui-layer {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 20px;
             width: 100%;
-            pointer-events: none;
             text-align: center;
-            padding-top: 20px;
+            pointer-events: none;
+            z-index: 10;
         }
 
         h1 {
-            font-family: 'Dancing Script', cursive;
-            font-size: 2.5rem;
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 105, 180, 0.6);
             margin: 0;
-            color: white;
-            text-shadow: 0 0 10px #ff69b4;
             opacity: 0.9;
+            letter-spacing: 2px;
         }
-        p { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+        p { color: rgba(200, 200, 255, 0.7); font-size: 0.9rem; margin-top: 5px; }
 
-        /* Tarjeta de Mensaje */
+        /* Tarjeta con efecto Cristal (Glassmorphism) */
         #message-card {
             pointer-events: auto;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             color: #fff;
             max-width: 280px;
             text-align: center;
             position: absolute;
-            top: 40%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 0 30px rgba(255,192,203, 0.4);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             z-index: 100;
         }
-        #message-card.active { transform: translate(-50%, -50%) scale(1); }
-        #message-text { font-size: 1.1rem; margin-bottom: 15px; line-height: 1.4; }
+        #message-card.active { transform: translate(-50%, -50%) scale(1); opacity: 1;}
+        #message-text { font-size: 1.2rem; margin-bottom: 20px; font-weight: 500; color: #ffe4e1; }
+        
         .close-btn {
-            background: #ff69b4; border: none; color: white; padding: 8px 20px;
-            border-radius: 20px; cursor: pointer; font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            transition: transform 0.2s;
         }
+        .close-btn:active { transform: scale(0.95); }
+
     </style>
 </head>
 <body>
 
     <div id="ui-layer">
-        <h1>El Jardín del Conejo</h1>
-        <p>Saluda al guardián del jardín</p>
+        <h1>Jardín Lunar</h1>
+        <p>Un regalo interactivo · Toca al conejo</p>
     </div>
 
     <div id="message-card">
         <div id="message-text">...</div>
-        <button class="close-btn" onclick="closeMessage()">Cerrar</button>
+        <button class="close-btn" onclick="closeMessage()">Guardar Recuerdo</button>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -81,96 +94,144 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let width, height;
-    
+
+    // --- CONFIGURACIÓN ---
     const dedicatorias = [
-        "El conejito te manda este abrazo.", "Eres la flor más bonita aquí.",
-        "Gracias por estar ahí.", "Me haces muy feliz.", "Esta flor es para ti.",
-        "Pienso en ti.", "Eres magia.", "Te quiero mucho."
+        "Tu sonrisa ilumina todo.", "Eres mi lugar seguro.", "Gracias por existir.",
+        "Esto es solo para ti.", "Me encantas.", "Eres arte.", 
+        "Siempre te cuidaré.", "Un abrazo virtual.", "Eres increíble."
     ];
 
     let flores = [];
+    let particulas = [];
     let estrellas = [];
     let conejo;
+    let moonAlpha = 0;
 
-    // Configuración
+    // Resize
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        // Reinicializar conejo al cambiar tamaño para que quede centrado abajo
-        conejo = new Conejo(width/2, height * 0.85);
+        conejo = new Conejo(width/2, height * 0.88);
     }
     window.addEventListener('resize', resize);
-    
-    // Paletas
-    const paletas = [
-        { main: ['#FF69B4', '#FFB6C1'], spots: '#C71585', inner: '#FFF0F5' }, 
-        { main: ['#FFA07A', '#FFD700'], spots: '#8B4513', inner: '#FFFFE0' },
-        { main: ['#BA55D3', '#E6E6FA'], spots: '#4B0082', inner: '#F0FFFF' }
-    ];
 
-    // --- CLASE CONEJO INTERACTIVO ---
+    // --- CLASES VISUALES MEJORADAS ---
+
+    class Particula {
+        constructor(x, y, color) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random() - 0.5) * 3;
+            this.vy = (Math.random() - 0.5) * 3;
+            this.life = 1;
+            this.color = color || '#FFF';
+            this.size = Math.random() * 3;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.life -= 0.02;
+            this.size *= 0.95;
+        }
+        draw() {
+            ctx.globalAlpha = this.life;
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
     class Conejo {
         constructor(x, y) {
-            this.x = x;
-            this.y = y;
+            this.x = x; this.y = y;
             this.scale = 1;
-            // Temporizadores para animaciones
-            this.earWiggleTimer = 0;
-            this.noseWiggleTimer = 0;
+            this.blinkTimer = 0;
+            this.nextBlink = 100; // Frames para parpadear
+            this.wiggle = 0;
+            this.actionTimer = 0;
         }
-
         update() {
-            if (this.earWiggleTimer > 0) this.earWiggleTimer--;
-            if (this.noseWiggleTimer > 0) this.noseWiggleTimer--;
-            // Pequeña respiración
-            this.scale = 1 + Math.sin(Date.now() * 0.002) * 0.02;
+            this.nextBlink--;
+            if(this.nextBlink <= 0) {
+                this.blinkTimer = 10; // Duración del parpadeo
+                this.nextBlink = Math.random() * 200 + 100;
+            }
+            if(this.blinkTimer > 0) this.blinkTimer--;
+            
+            if(this.actionTimer > 0) {
+                this.actionTimer--;
+                this.wiggle = Math.sin(this.actionTimer * 0.5) * 0.1;
+            } else {
+                this.wiggle = 0;
+            }
+            // Respiración suave
+            this.scale = 1 + Math.sin(Date.now()*0.003)*0.015; 
         }
 
         draw() {
             ctx.save();
             ctx.translate(this.x, this.y);
-            ctx.scale(this.scale, this.scale);
+            ctx.scale(this.scale, this.scale + (this.wiggle*0.5));
+            ctx.rotate(this.wiggle);
 
-            // Cuerpo (Blanco gordo)
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.ellipse(0, 40, 70, 60, 0, 0, Math.PI*2);
-            ctx.fill();
-            
-            // Patitas (muñones)
-            ctx.beginPath();
-            ctx.ellipse(-40, 90, 25, 15, Math.PI/4, 0, Math.PI*2);
-            ctx.ellipse(40, 90, 25, 15, -Math.PI/4, 0, Math.PI*2);
-            ctx.fill();
+            // Sombra del conejo en el suelo
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(0, 55, 60, 10, 0, 0, Math.PI*2); ctx.fill();
+
+            // Cuerpo con gradiente (Volumen)
+            let gradBody = ctx.createRadialGradient(-20, 20, 10, 0, 40, 80);
+            gradBody.addColorStop(0, '#FFFFFF');
+            gradBody.addColorStop(1, '#E0E0E0');
+            ctx.fillStyle = gradBody;
+            ctx.beginPath(); ctx.ellipse(0, 40, 70, 55, 0, 0, Math.PI*2); ctx.fill();
+
+            // Patitas
+            ctx.beginPath(); ctx.ellipse(-40, 90, 25, 12, Math.PI/5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(40, 90, 25, 12, -Math.PI/5, 0, Math.PI*2); ctx.fill();
 
             // Cabeza
-            ctx.beginPath();
-            ctx.arc(0, 0, 50, 0, Math.PI*2);
-            ctx.fill();
+            let gradHead = ctx.createRadialGradient(-15, -15, 10, 0, 0, 55);
+            gradHead.addColorStop(0, '#FFFFFF');
+            gradHead.addColorStop(1, '#EEEEEE');
+            ctx.fillStyle = gradHead;
+            ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI*2); ctx.fill();
 
-            // Orejas (Se mueven si el timer está activo)
-            let earWiggle = (this.earWiggleTimer > 0) ? Math.sin(this.earWiggleTimer * 0.5) * 0.2 : 0;
-            this.drawEar(-35, -40, -0.3 + earWiggle);
-            this.drawEar(35, -40, 0.3 + earWiggle);
+            // Orejas con profundidad
+            this.drawEar(-35, -45, -0.2 + this.wiggle);
+            this.drawEar(35, -45, 0.2 - this.wiggle);
 
             // Cara
             // Ojos
-            ctx.fillStyle = '#333';
-            ctx.beginPath(); ctx.arc(-20, -5, 5, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(20, -5, 5, 0, Math.PI*2); ctx.fill();
-            
-            // Mejillas rosadas
-            ctx.fillStyle = 'rgba(255, 192, 203, 0.6)';
-            ctx.beginPath(); ctx.arc(-35, 15, 10, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(35, 15, 10, 0, Math.PI*2); ctx.fill();
+            if(this.blinkTimer > 0) {
+                // Cerrados
+                ctx.beginPath(); ctx.moveTo(-28, -5); ctx.quadraticCurveTo(-20, 0, -12, -5); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(12, -5); ctx.quadraticCurveTo(20, 0, 28, -5); ctx.stroke();
+            } else {
+                // Abiertos y brillantes
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.ellipse(-20, -5, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(20, -5, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+                // Brillo ojo
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath(); ctx.arc(-18, -8, 2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(22, -8, 2, 0, Math.PI*2); ctx.fill();
+            }
 
-            // Nariz Roja (Se mueve si el timer está activo)
-            let noseWiggle = (this.noseWiggleTimer > 0) ? Math.sin(this.noseWiggleTimer) * 3 : 0;
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.arc(0 + noseWiggle, 15, 7, 0, Math.PI*2);
-            ctx.fill();
+            // Mejillas (Blush) con desenfoque
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#FF69B4';
+            ctx.fillStyle = 'rgba(255, 182, 193, 0.5)';
+            ctx.beginPath(); ctx.arc(-35, 15, 12, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(35, 15, 12, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Nariz bonita
+            ctx.fillStyle = '#FF5555';
+            ctx.beginPath(); ctx.arc(0, 15, 6, 0, Math.PI*2); ctx.fill();
             
+            // Boca
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0, 15, 10, 0.2, Math.PI-0.2); ctx.stroke(); // Sonrisa simple
+
             ctx.restore();
         }
 
@@ -178,146 +239,190 @@
             ctx.save();
             ctx.translate(x, y);
             ctx.rotate(angle);
-            // Oreja externa blanca
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.ellipse(0, -30, 15, 40, 0, 0, Math.PI*2);
-            ctx.fill();
-            // Oreja interna rosa
-            ctx.fillStyle = '#FFB6C1';
-            ctx.beginPath();
-            ctx.ellipse(0, -30, 8, 30, 0, 0, Math.PI*2);
-            ctx.fill();
+            
+            // Externa
+            ctx.fillStyle = '#F0F0F0';
+            ctx.beginPath(); ctx.ellipse(0, -30, 16, 45, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Interna (Rosita suave)
+            let gradEar = ctx.createLinearGradient(0, -10, 0, -60);
+            gradEar.addColorStop(0, '#FFE4E1');
+            gradEar.addColorStop(1, '#FFB6C1');
+            ctx.fillStyle = gradEar;
+            ctx.beginPath(); ctx.ellipse(0, -30, 8, 35, 0, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
         
-        // Verificar dónde tocaron al conejo
-        checkInteraction(mx, my) {
-            // Zonas de impacto aproximadas (hitboxes)
-            // Nariz
-            if (Math.hypot(mx - this.x, my - (this.y + 15)) < 15) return 'nose';
-            // Orejas (zona general arriba de la cabeza)
-            if (Math.hypot(mx - this.x, my - (this.y - 50)) < 40) return 'ears';
-            // Cuerpo general
-            if (Math.hypot(mx - this.x, my - (this.y + 20)) < 70) return 'body';
-            return null;
-        }
-
-        trigger(part) {
-            if (part === 'nose') this.noseWiggleTimer = 20;
-            if (part === 'ears') this.earWiggleTimer = 30;
+        interact() {
+            this.actionTimer = 20; // Wiggle effect
+            // Lanzar partículas
+            for(let i=0; i<10; i++) {
+                particulas.push(new Particula(this.x, this.y - 50, '#FFD700'));
+            }
         }
     }
 
-    // --- CLASE ASTROMELIA (Versión Simplificada para rendimiento) ---
     class Astromelia {
         constructor(x, y) {
-            this.x = x; this.y = y; this.size = 0; this.maxSize = 30 + Math.random() * 20;
-            const p = paletas[Math.floor(Math.random() * paletas.length)];
-            this.colors = p.main; this.spotColor = p.spots; this.innerColor = p.inner;
+            this.x = x; this.y = y; this.size = 0; this.maxSize = 35 + Math.random() * 25;
             this.mensaje = dedicatorias[Math.floor(Math.random() * dedicatorias.length)];
-            this.angle = (Math.random()-0.5)*0.5;
+            
+            // Colores vibrantes
+            const colors = [
+                ['#ff0080', '#ff8c00'], // Sunset
+                ['#e0115f', '#ffffff'], // Rubí
+                ['#9932cc', '#dda0dd'], // Orquídea
+                ['#ffd700', '#ff4500']  // Gold
+            ];
+            this.colorPair = colors[Math.floor(Math.random()*colors.length)];
+            
+            this.angle = (Math.random()-0.5)*0.3;
+            this.growSpeed = 0.5 + Math.random()*0.5;
         }
-        update() { if (this.size < this.maxSize) this.size += (this.maxSize - this.size) * 0.05; }
+        update() { if(this.size < this.maxSize) this.size += (this.maxSize - this.size)*0.08; }
+        
         draw(time) {
             const wind = Math.sin(time*0.002 + this.x)*5;
             ctx.save();
-            // Tallo simple
-            ctx.beginPath(); ctx.moveTo(this.x, height);
-            ctx.quadraticCurveTo(this.x + wind, height - (height-this.y)/2, this.x+wind, this.y);
-            ctx.strokeStyle = '#228B22'; ctx.lineWidth = this.size*0.1; ctx.stroke();
+            ctx.translate(this.x + wind, this.y);
             
-            ctx.translate(this.x+wind, this.y);
-            ctx.rotate(wind*0.01 + this.angle);
-            for (let i = 0; i < 6; i++) {
+            // Tallo
+            ctx.beginPath(); 
+            ctx.moveTo(-wind, height-this.y); // Base fija
+            ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0);
+            ctx.strokeStyle = '#2d5a27'; ctx.lineWidth = this.size*0.1; ctx.stroke();
+            
+            ctx.rotate(wind*0.005 + this.angle);
+
+            // Glow effect para la noche
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.colorPair[0];
+
+            // Flor
+            for(let i=0; i<6; i++) {
                 ctx.save(); ctx.rotate(i*Math.PI/3);
-                this.drawPetal(i%2!==0); ctx.restore();
-            }
-            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(0,0,this.size*0.15,0,Math.PI*2); ctx.fill();
-            ctx.restore();
-        }
-        drawPetal(isInner) {
-            const s = this.size;
-            ctx.beginPath(); ctx.moveTo(0,0);
-            ctx.bezierCurveTo(s*0.5,-s*0.2,s*0.8,-s*1.2,0,-s*2);
-            ctx.bezierCurveTo(-s*0.8,-s*1.2,-s*0.5,-s*0.2,0,0);
-            let grad = ctx.createLinearGradient(0,0,0,-s*2);
-            grad.addColorStop(0, isInner ? this.innerColor : this.colors[0]);
-            grad.addColorStop(1, this.colors[1]);
-            ctx.fillStyle = grad; ctx.fill();
-            if (isInner) {
-                ctx.fillStyle = this.spotColor;
-                for(let k=0;k<8;k++) {
-                    ctx.beginPath();
-                    ctx.ellipse((Math.random()-0.5)*s*0.4, -Math.random()*s*1.5, s*0.02, s*0.05,0,0,Math.PI*2);
-                    ctx.fill();
+                // Pétalo
+                let grad = ctx.createRadialGradient(0, -this.size, 0, 0, -this.size, this.size);
+                grad.addColorStop(0, this.colorPair[1]);
+                grad.addColorStop(1, this.colorPair[0]);
+                ctx.fillStyle = grad;
+                
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.bezierCurveTo(this.size*0.5, -this.size*0.2, this.size*0.8, -this.size*1.5, 0, -this.size*2);
+                ctx.bezierCurveTo(-this.size*0.8, -this.size*1.5, -this.size*0.5, -this.size*0.2, 0, 0);
+                ctx.fill();
+                
+                // Manchas solo internos
+                if(i%2!==0) {
+                    ctx.fillStyle = '#330000';
+                    for(let k=0; k<5; k++) {
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.size*(0.5+Math.random()*0.5), this.size*0.02, this.size*0.06, 0,0,Math.PI*2);
+                        ctx.fill();
+                    }
                 }
+                ctx.restore();
             }
+            ctx.shadowBlur = 0; // Reset glow
+            ctx.restore();
         }
         checkClick(mx, my) { return Math.hypot(mx - this.x, my - this.y) < this.maxSize; }
     }
 
-    // --- ESTRELLAS ---
-    class Estrella {
-        constructor() { this.x = Math.random()*width; this.y = Math.random()*height*0.6; this.s = Math.random()*1.5; this.a = Math.random(); this.da = 0.01+Math.random()*0.03; }
-        update() { this.a += this.da; if(this.a>1||this.a<0.2) this.da*=-1; }
-        draw() { ctx.fillStyle = `rgba(255,255,255,${this.a})`; ctx.beginPath(); ctx.arc(this.x,this.y,this.s,0,Math.PI*2); ctx.fill(); }
+    // --- FONDO (Luna y Estrellas) ---
+    function drawBackground() {
+        // Cielo degradado
+        let grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#020111');
+        grad.addColorStop(1, '#191923');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,width,height);
+
+        // Luna
+        ctx.shadowBlur = 50;
+        ctx.shadowColor = 'rgba(255, 255, 200, 0.5)';
+        ctx.fillStyle = '#FFFFF0';
+        ctx.beginPath();
+        ctx.arc(width - 100, 100, 60, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Estrellas
+        ctx.fillStyle = '#FFF';
+        estrellas.forEach(e => {
+            ctx.globalAlpha = Math.random();
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.s, 0, Math.PI*2); ctx.fill();
+        });
+        ctx.globalAlpha = 1;
     }
 
-    // Initialization
+    // Init
     resize();
-    for(let i=0; i<80; i++) estrellas.push(new Estrella());
+    for(let i=0; i<150; i++) estrellas.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, s: Math.random()*1.5});
 
+    // Loop
     function animate(time) {
-        ctx.fillStyle = '#090a0f'; ctx.fillRect(0,0,width,height); // Limpiar fondo
-        estrellas.forEach(e => { e.update(); e.draw(); });
+        drawBackground();
+        
+        // Flores (detrás del conejo)
         flores.forEach(f => { f.update(); f.draw(time); });
-        conejo.update(); conejo.draw();
+        
+        // Conejo
+        if(conejo) { conejo.update(); conejo.draw(); }
+
+        // Partículas
+        for(let i=particulas.length-1; i>=0; i--) {
+            let p = particulas[i];
+            p.update();
+            p.draw();
+            if(p.life <= 0) particulas.splice(i, 1);
+        }
+
         requestAnimationFrame(animate);
     }
     animate(0);
 
-    // --- INTERACCIÓN PRINCIPAL ---
+    // Inputs
     function handleInput(e) {
         const rect = canvas.getBoundingClientRect();
         const x = (e.clientX || e.touches[0].clientX) - rect.left;
         const y = (e.clientY || e.touches[0].clientY) - rect.top;
 
-        // 1. ¿Tocaron al conejo?
-        const conejoPart = conejo.checkInteraction(x, y);
-        if (conejoPart) {
-            if (conejoPart === 'body') {
-                // El conejo te regala una flor
-                flores.push(new Astromelia(x, y - 50)); // Nace un poco arriba de donde tocaste
-            } else {
-                // Animación de orejas o nariz
-                conejo.trigger(conejoPart);
-            }
-            return; // Si tocó al conejo, no hace nada más
+        // 1. Check Flor
+        for(let f of flores) {
+            if(f.checkClick(x,y)) { mostrarMensaje(f.mensaje); return; }
         }
 
-        // 2. ¿Tocaron una flor existente?
-        for (let i = flores.length - 1; i >= 0; i--) {
-            if (flores[i].checkClick(x, y)) {
-                mostrarMensaje(flores[i].mensaje);
-                return;
-            }
+        // 2. Check Conejo
+        let distConejo = Math.hypot(x - conejo.x, y - (conejo.y - 40));
+        if(distConejo < 80) {
+            conejo.interact();
+            // Nace flor mágica
+            let newX = Math.random() > 0.5 ? conejo.x + 80 : conejo.x - 80;
+            flores.push(new Astromelia(Math.max(20, Math.min(width-20, newX)), height * 0.9));
+            return;
         }
 
-        // 3. Plantar en el suelo (si no tocó nada más)
-        if (y > height * 0.4) flores.push(new Astromelia(x, y));
+        // 3. Plantar suelo
+        if(y > height*0.6) {
+            flores.push(new Astromelia(x, y));
+            // Partículas al plantar
+            for(let i=0; i<5; i++) particulas.push(new Particula(x, y, '#00FF00'));
+        }
     }
 
     canvas.addEventListener('mousedown', handleInput);
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); }, {passive:false});
 
-    // UI
+    // UI Logic
     const card = document.getElementById('message-card');
-    const msgText = document.getElementById('message-text');
-    function mostrarMensaje(texto) { msgText.textContent = texto; card.classList.add('active'); }
+    function mostrarMensaje(txt) {
+        document.getElementById('message-text').innerText = txt;
+        card.classList.add('active');
+    }
     function closeMessage() { card.classList.remove('active'); }
-    // Ajuste para que el título no moleste en móviles
-    setTimeout(() => { document.getElementById('ui-layer').style.opacity = '0'; }, 5000);
+
 </script>
 </body>
 </html>
