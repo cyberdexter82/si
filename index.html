@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Jardín del Conejo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Montserrat:wght@300&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
+            font-family: 'Montserrat', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        canvas { display: block; }
+        
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            text-align: center;
+            padding-top: 20px;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            margin: 0;
+            color: white;
+            text-shadow: 0 0 10px #ff69b4;
+            opacity: 0.9;
+        }
+        p { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+
+        /* Tarjeta de Mensaje */
+        #message-card {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            max-width: 280px;
+            text-align: center;
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 30px rgba(255,192,203, 0.4);
+            z-index: 100;
+        }
+        #message-card.active { transform: translate(-50%, -50%) scale(1); }
+        #message-text { font-size: 1.1rem; margin-bottom: 15px; line-height: 1.4; }
+        .close-btn {
+            background: #ff69b4; border: none; color: white; padding: 8px 20px;
+            border-radius: 20px; cursor: pointer; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1>El Jardín del Conejo</h1>
+        <p>Saluda al guardián del jardín</p>
+    </div>
+
+    <div id="message-card">
+        <div id="message-text">...</div>
+        <button class="close-btn" onclick="closeMessage()">Cerrar</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    
+    const dedicatorias = [
+        "El conejito te manda este abrazo.", "Eres la flor más bonita aquí.",
+        "Gracias por estar ahí.", "Me haces muy feliz.", "Esta flor es para ti.",
+        "Pienso en ti.", "Eres magia.", "Te quiero mucho."
+    ];
+
+    let flores = [];
+    let estrellas = [];
+    let conejo;
+
+    // Configuración
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        // Reinicializar conejo al cambiar tamaño para que quede centrado abajo
+        conejo = new Conejo(width/2, height * 0.85);
+    }
+    window.addEventListener('resize', resize);
+    
+    // Paletas
+    const paletas = [
+        { main: ['#FF69B4', '#FFB6C1'], spots: '#C71585', inner: '#FFF0F5' }, 
+        { main: ['#FFA07A', '#FFD700'], spots: '#8B4513', inner: '#FFFFE0' },
+        { main: ['#BA55D3', '#E6E6FA'], spots: '#4B0082', inner: '#F0FFFF' }
+    ];
+
+    // --- CLASE CONEJO INTERACTIVO ---
+    class Conejo {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.scale = 1;
+            // Temporizadores para animaciones
+            this.earWiggleTimer = 0;
+            this.noseWiggleTimer = 0;
+        }
+
+        update() {
+            if (this.earWiggleTimer > 0) this.earWiggleTimer--;
+            if (this.noseWiggleTimer > 0) this.noseWiggleTimer--;
+            // Pequeña respiración
+            this.scale = 1 + Math.sin(Date.now() * 0.002) * 0.02;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.scale(this.scale, this.scale);
+
+            // Cuerpo (Blanco gordo)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.ellipse(0, 40, 70, 60, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Patitas (muñones)
+            ctx.beginPath();
+            ctx.ellipse(-40, 90, 25, 15, Math.PI/4, 0, Math.PI*2);
+            ctx.ellipse(40, 90, 25, 15, -Math.PI/4, 0, Math.PI*2);
+            ctx.fill();
+
+            // Cabeza
+            ctx.beginPath();
+            ctx.arc(0, 0, 50, 0, Math.PI*2);
+            ctx.fill();
+
+            // Orejas (Se mueven si el timer está activo)
+            let earWiggle = (this.earWiggleTimer > 0) ? Math.sin(this.earWiggleTimer * 0.5) * 0.2 : 0;
+            this.drawEar(-35, -40, -0.3 + earWiggle);
+            this.drawEar(35, -40, 0.3 + earWiggle);
+
+            // Cara
+            // Ojos
+            ctx.fillStyle = '#333';
+            ctx.beginPath(); ctx.arc(-20, -5, 5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(20, -5, 5, 0, Math.PI*2); ctx.fill();
+            
+            // Mejillas rosadas
+            ctx.fillStyle = 'rgba(255, 192, 203, 0.6)';
+            ctx.beginPath(); ctx.arc(-35, 15, 10, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(35, 15, 10, 0, Math.PI*2); ctx.fill();
+
+            // Nariz Roja (Se mueve si el timer está activo)
+            let noseWiggle = (this.noseWiggleTimer > 0) ? Math.sin(this.noseWiggleTimer) * 3 : 0;
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(0 + noseWiggle, 15, 7, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        drawEar(x, y, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            // Oreja externa blanca
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.ellipse(0, -30, 15, 40, 0, 0, Math.PI*2);
+            ctx.fill();
+            // Oreja interna rosa
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.ellipse(0, -30, 8, 30, 0, 0, Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Verificar dónde tocaron al conejo
+        checkInteraction(mx, my) {
+            // Zonas de impacto aproximadas (hitboxes)
+            // Nariz
+            if (Math.hypot(mx - this.x, my - (this.y + 15)) < 15) return 'nose';
+            // Orejas (zona general arriba de la cabeza)
+            if (Math.hypot(mx - this.x, my - (this.y - 50)) < 40) return 'ears';
+            // Cuerpo general
+            if (Math.hypot(mx - this.x, my - (this.y + 20)) < 70) return 'body';
+            return null;
+        }
+
+        trigger(part) {
+            if (part === 'nose') this.noseWiggleTimer = 20;
+            if (part === 'ears') this.earWiggleTimer = 30;
+        }
+    }
+
+    // --- CLASE ASTROMELIA (Versión Simplificada para rendimiento) ---
+    class Astromelia {
+        constructor(x, y) {
+            this.x = x; this.y = y; this.size = 0; this.maxSize = 30 + Math.random() * 20;
+            const p = paletas[Math.floor(Math.random() * paletas.length)];
+            this.colors = p.main; this.spotColor = p.spots; this.innerColor = p.inner;
+            this.mensaje = dedicatorias[Math.floor(Math.random() * dedicatorias.length)];
+            this.angle = (Math.random()-0.5)*0.5;
+        }
+        update() { if (this.size < this.maxSize) this.size += (this.maxSize - this.size) * 0.05; }
+        draw(time) {
+            const wind = Math.sin(time*0.002 + this.x)*5;
+            ctx.save();
+            // Tallo simple
+            ctx.beginPath(); ctx.moveTo(this.x, height);
+            ctx.quadraticCurveTo(this.x + wind, height - (height-this.y)/2, this.x+wind, this.y);
+            ctx.strokeStyle = '#228B22'; ctx.lineWidth = this.size*0.1; ctx.stroke();
+            
+            ctx.translate(this.x+wind, this.y);
+            ctx.rotate(wind*0.01 + this.angle);
+            for (let i = 0; i < 6; i++) {
+                ctx.save(); ctx.rotate(i*Math.PI/3);
+                this.drawPetal(i%2!==0); ctx.restore();
+            }
+            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(0,0,this.size*0.15,0,Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+        drawPetal(isInner) {
+            const s = this.size;
+            ctx.beginPath(); ctx.moveTo(0,0);
+            ctx.bezierCurveTo(s*0.5,-s*0.2,s*0.8,-s*1.2,0,-s*2);
+            ctx.bezierCurveTo(-s*0.8,-s*1.2,-s*0.5,-s*0.2,0,0);
+            let grad = ctx.createLinearGradient(0,0,0,-s*2);
+            grad.addColorStop(0, isInner ? this.innerColor : this.colors[0]);
+            grad.addColorStop(1, this.colors[1]);
+            ctx.fillStyle = grad; ctx.fill();
+            if (isInner) {
+                ctx.fillStyle = this.spotColor;
+                for(let k=0;k<8;k++) {
+                    ctx.beginPath();
+                    ctx.ellipse((Math.random()-0.5)*s*0.4, -Math.random()*s*1.5, s*0.02, s*0.05,0,0,Math.PI*2);
+                    ctx.fill();
+                }
+            }
+        }
+        checkClick(mx, my) { return Math.hypot(mx - this.x, my - this.y) < this.maxSize; }
+    }
+
+    // --- ESTRELLAS ---
+    class Estrella {
+        constructor() { this.x = Math.random()*width; this.y = Math.random()*height*0.6; this.s = Math.random()*1.5; this.a = Math.random(); this.da = 0.01+Math.random()*0.03; }
+        update() { this.a += this.da; if(this.a>1||this.a<0.2) this.da*=-1; }
+        draw() { ctx.fillStyle = `rgba(255,255,255,${this.a})`; ctx.beginPath(); ctx.arc(this.x,this.y,this.s,0,Math.PI*2); ctx.fill(); }
+    }
+
+    // Initialization
+    resize();
+    for(let i=0; i<80; i++) estrellas.push(new Estrella());
+
+    function animate(time) {
+        ctx.fillStyle = '#090a0f'; ctx.fillRect(0,0,width,height); // Limpiar fondo
+        estrellas.forEach(e => { e.update(); e.draw(); });
+        flores.forEach(f => { f.update(); f.draw(time); });
+        conejo.update(); conejo.draw();
+        requestAnimationFrame(animate);
+    }
+    animate(0);
+
+    // --- INTERACCIÓN PRINCIPAL ---
+    function handleInput(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        // 1. ¿Tocaron al conejo?
+        const conejoPart = conejo.checkInteraction(x, y);
+        if (conejoPart) {
+            if (conejoPart === 'body') {
+                // El conejo te regala una flor
+                flores.push(new Astromelia(x, y - 50)); // Nace un poco arriba de donde tocaste
+            } else {
+                // Animación de orejas o nariz
+                conejo.trigger(conejoPart);
+            }
+            return; // Si tocó al conejo, no hace nada más
+        }
+
+        // 2. ¿Tocaron una flor existente?
+        for (let i = flores.length - 1; i >= 0; i--) {
+            if (flores[i].checkClick(x, y)) {
+                mostrarMensaje(flores[i].mensaje);
+                return;
+            }
+        }
+
+        // 3. Plantar en el suelo (si no tocó nada más)
+        if (y > height * 0.4) flores.push(new Astromelia(x, y));
+    }
+
+    canvas.addEventListener('mousedown', handleInput);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); }, {passive:false});
+
+    // UI
+    const card = document.getElementById('message-card');
+    const msgText = document.getElementById('message-text');
+    function mostrarMensaje(texto) { msgText.textContent = texto; card.classList.add('active'); }
+    function closeMessage() { card.classList.remove('active'); }
+    // Ajuste para que el título no moleste en móviles
+    setTimeout(() => { document.getElementById('ui-layer').style.opacity = '0'; }, 5000);
+</script>
+</body>
+</html>
