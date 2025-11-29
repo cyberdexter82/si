@@ -12,6 +12,7 @@
             overflow: hidden;
             background: #000;
             font-family: 'Montserrat', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* --- PANTALLA DE INICIO (Heartbeat) --- */
@@ -60,17 +61,18 @@
             pointer-events: none;
             opacity: 0;
             transition: opacity 2s;
+            z-index: 10;
         }
         
         /* Botón Mágico para el final */
         #love-btn {
             position: absolute;
-            bottom: 30px;
+            bottom: 40px; /* Un poco más arriba para asegurar visibilidad */
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 30px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
             color: white;
             border-radius: 50px;
             cursor: pointer;
@@ -79,20 +81,21 @@
             pointer-events: auto;
             backdrop-filter: blur(5px);
             transition: all 0.5s;
-            opacity: 0; /* Aparece después */
+            opacity: 0; 
+            z-index: 20; /* Asegurar que esté sobre el canvas */
         }
         #love-btn:hover {
-            background: rgba(255, 105, 180, 0.3);
-            box-shadow: 0 0 20px #ff69b4;
-            transform: translateX(-50%) scale(1.1);
+            background: rgba(255, 105, 180, 0.4);
+            box-shadow: 0 0 30px #ff69b4;
+            transform: translateX(-50%) scale(1.05);
         }
 
         /* --- LA CARTA (SCROLLING TEXT) --- */
         #letter-container {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none; /* Se activa al final */
+            background: rgba(0,0,0,0.9);
+            display: none; 
             justify-content: center;
             align-items: center;
             z-index: 200;
@@ -104,17 +107,17 @@
             font-family: 'Parisienne', cursive;
             font-size: 1.8rem;
             line-height: 1.8;
-            max-width: 90%;
+            max-width: 85%;
             text-shadow: 0 0 10px rgba(255, 192, 203, 0.5);
             position: absolute;
-            top: 100%; /* Empieza abajo */
-            animation: scrollUp 40s linear forwards; /* AJUSTA 40s SI LA CARTA ES MUY LARGA */
+            top: 100%; 
+            animation: scrollUp 45s linear forwards; 
         }
         @keyframes scrollUp {
             0% { top: 100%; opacity: 0; }
             10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: -150%; opacity: 0; }
+            85% { opacity: 1; }
+            100% { top: -200%; opacity: 0; }
         }
 
         /* Tarjeta de Mensajes Cortos */
@@ -122,19 +125,24 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            background: rgba(20, 20, 30, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(15px);
             padding: 30px;
             border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.2);
             color: white;
             text-align: center;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             max-width: 300px;
             pointer-events: auto;
+            z-index: 30;
         }
         #message-card.active { transform: translate(-50%, -50%) scale(1); }
-
+        .close-card-btn {
+            margin-top: 20px; background: linear-gradient(45deg, #ff69b4, #ff8da1);
+            border: none; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -145,19 +153,18 @@
     </div>
 
     <div id="ui-layer">
-        <h1 style="font-family: 'Cinzel'; color: white; text-shadow: 0 0 10px orchid;">Nuestro Mundo</h1>
+        <h1 style="font-family: 'Cinzel'; color: white; text-shadow: 0 0 15px rgba(255,105,180,0.7); font-size: 2.5rem;">Nuestro Mundo</h1>
     </div>
 
     <button id="love-btn" onclick="startFinale()">Leer mi corazón</button>
 
     <div id="message-card">
-        <p id="msg-content" style="font-size: 1.2rem;">...</p>
-        <button onclick="closeCard()" style="margin-top:15px; background:transparent; border:1px solid white; color:white; padding:5px 15px; border-radius:15px;">Cerrar</button>
+        <p id="msg-content" style="font-size: 1.3rem; font-family: 'Parisienne', cursive;">...</p>
+        <button class="close-card-btn" onclick="closeCard()">Guardar</button>
     </div>
 
     <div id="letter-container">
-        <div id="scrolling-text">
-            </div>
+        <div id="scrolling-text"></div>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -181,13 +188,15 @@
         Te amo con todo mi corazon y ademas de sentir por ti se lo que eres
         Y se que la gran niña que tienes en tu corazon es mas que perfecta
         Te amo luci <3
+
         [De C.O]
     `;
 
     // 2. MENSAJES DE LAS FLORES
     const MENSAJES_FLORES = [
         "Te amo.", "Eres perfecta.", "Mi casualidad favorita.",
-        "Siempre juntos.", "Me haces mejor persona.", "Tu risa es mi música."
+        "Siempre juntos.", "Me haces mejor persona.", "Tu risa es mi música.",
+        "Gracias por tanto.", "Eres mi hogar."
     ];
 
     /* =========================================
@@ -199,11 +208,9 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let width, height;
-    let gameState = 'intro'; // intro, playing, finale
+    let gameState = 'intro'; 
 
-    // Objetos
     let flores = [];
-    let particulas = [];
     let fuegosArtificiales = [];
     let estrellas = [];
     let conejo;
@@ -211,9 +218,18 @@
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        conejo = new Conejo(width/2, height * 0.85);
+        // --- CAMBIO: Conejo más arriba (0.75 en lugar de 0.85) ---
+        conejo = new Conejo(width/2, height * 0.75);
     }
     window.addEventListener('resize', resize);
+
+    // Paletas para las flores bonitas
+    const paletas = [
+        ['#ff0080', '#ff8c00'], // Sunset
+        ['#e0115f', '#ffffff'], // Rubí
+        ['#9932cc', '#dda0dd'], // Orquídea
+        ['#ffd700', '#ff4500']  // Gold
+    ];
 
     // --- CLASES ---
 
@@ -225,17 +241,17 @@
         draw() {
             ctx.save();
             ctx.translate(this.x, this.y);
-            // Si es final, mira arriba
             if(this.lookAtMoon) ctx.rotate(-0.2);
-            
             ctx.scale(this.scale, this.scale);
             
             // Sombra
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
             ctx.beginPath(); ctx.ellipse(0, 50, 60, 15, 0,0,Math.PI*2); ctx.fill();
 
-            // Cuerpo
-            ctx.fillStyle = '#fff';
+            // Cuerpo (con gradiente suave)
+            let grad = ctx.createRadialGradient(0, 40, 10, 0, 40, 70);
+            grad.addColorStop(0, '#fff'); grad.addColorStop(1, '#e0e0e0');
+            ctx.fillStyle = grad;
             ctx.beginPath(); ctx.ellipse(0, 40, 70, 55, 0,0,Math.PI*2); ctx.fill();
             
             // Cabeza
@@ -247,13 +263,20 @@
 
             // Cara
             if(!this.lookAtMoon) {
-                ctx.fillStyle = '#f00'; // Nariz
-                ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#000'; // Ojos
-                ctx.beginPath(); ctx.arc(-20, -15, 6, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(20, -15, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ff5555'; // Nariz
+                ctx.beginPath(); ctx.arc(0, 5, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#111'; // Ojos
+                ctx.beginPath(); ctx.arc(-20, -10, 6, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(20, -10, 6, 0, Math.PI*2); ctx.fill();
+                // Brillo ojos
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(-18, -12, 2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(22, -12, 2, 0, Math.PI*2); ctx.fill();
+                // Mejillas
+                ctx.fillStyle = 'rgba(255, 182, 193, 0.5)';
+                ctx.beginPath(); ctx.arc(-35, 10, 10, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(35, 10, 10, 0, Math.PI*2); ctx.fill();
             } else {
-                // De espaldas/mirando arriba
                 ctx.fillStyle = 'pink'; // Colita
                 ctx.beginPath(); ctx.arc(0, 70, 15, 0, Math.PI*2); ctx.fill();
             }
@@ -264,55 +287,78 @@
             ctx.fillStyle = '#fff';
             ctx.beginPath(); ctx.ellipse(0, -30, 15, 40, 0,0,Math.PI*2); ctx.fill();
             ctx.fillStyle = 'pink';
-            ctx.beginPath(); ctx.ellipse(0, -30, 8, 30, 0,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, -30, 8, 35, 0,0,Math.PI*2); ctx.fill();
             ctx.restore();
         }
     }
 
+    // --- CAMBIO: Clase Astromelia "Bonita" Restaurada ---
     class Astromelia {
         constructor(x, y) {
-            this.x = x; this.y = y; this.size = 0; this.max = 40 + Math.random()*30;
+            this.x = x; this.y = y; this.size = 0; this.max = 35 + Math.random()*25;
             this.msg = MENSAJES_FLORES[Math.floor(Math.random()*MENSAJES_FLORES.length)];
-            this.color = `hsl(${Math.random()*60 + 300}, 80%, 60%)`; // Rosas/Morados
+            this.colorPair = paletas[Math.floor(Math.random()*paletas.length)];
+            this.angle = (Math.random()-0.5)*0.3;
         }
-        update() { if(this.size < this.max) this.size += (this.max - this.size)*0.05; }
+        update() { if(this.size < this.max) this.size += (this.max - this.size)*0.08; }
         draw(t) {
             const wind = Math.sin(t*0.002 + this.x)*5;
             ctx.save();
             ctx.translate(this.x + wind, this.y);
-            // Tallo
-            ctx.strokeStyle = 'green'; ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.moveTo(0, height-this.y); ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0); ctx.stroke();
             
-            // Flor
-            ctx.fillStyle = this.color;
+            // Tallo
+            ctx.beginPath(); 
+            ctx.moveTo(-wind, height-this.y);
+            ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0);
+            ctx.strokeStyle = '#2d5a27'; ctx.lineWidth = this.size*0.1; ctx.stroke();
+            
+            ctx.rotate(wind*0.005 + this.angle);
+
+            // Glow effect
+            ctx.shadowBlur = 15; ctx.shadowColor = this.colorPair[0];
+
+            // Flor detallada
             for(let i=0; i<6; i++) {
                 ctx.save(); ctx.rotate(i*Math.PI/3);
-                ctx.beginPath(); ctx.ellipse(0, -this.size, this.size*0.3, this.size, 0,0,Math.PI*2); ctx.fill();
+                // Degradado del pétalo
+                let grad = ctx.createRadialGradient(0, -this.size, 0, 0, -this.size, this.size);
+                grad.addColorStop(0, this.colorPair[1]); grad.addColorStop(1, this.colorPair[0]);
+                ctx.fillStyle = grad;
+                
+                // Forma del pétalo
+                ctx.beginPath(); ctx.moveTo(0,0);
+                ctx.bezierCurveTo(this.size*0.5, -this.size*0.2, this.size*0.8, -this.size*1.5, 0, -this.size*2);
+                ctx.bezierCurveTo(-this.size*0.8, -this.size*1.5, -this.size*0.5, -this.size*0.2, 0, 0);
+                ctx.fill();
+                
+                // Manchas (tigrado) en pétalos internos
+                if(i%2!==0) {
+                    ctx.fillStyle = '#330000';
+                    for(let k=0; k<5; k++) {
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.size*(0.5+Math.random()*0.5), this.size*0.02, this.size*0.06, 0,0,Math.PI*2);
+                        ctx.fill();
+                    }
+                }
                 ctx.restore();
             }
-            ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.arc(0,0,this.size*0.2,0,Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
             ctx.restore();
         }
     }
 
     class Firework {
         constructor() {
-            this.x = Math.random() * width;
-            this.y = height;
+            this.x = Math.random() * width; this.y = height;
             this.targetY = Math.random() * height * 0.5;
             this.speed = 10 + Math.random()*5;
             this.color = `hsl(${Math.random()*360}, 100%, 70%)`;
-            this.exploded = false;
-            this.particles = [];
+            this.exploded = false; this.particles = [];
         }
         update() {
             if(!this.exploded) {
-                this.y -= this.speed;
-                this.speed *= 0.98;
-                if(this.y <= this.targetY || this.speed < 1) {
-                    this.explode();
-                }
+                this.y -= this.speed; this.speed *= 0.98;
+                if(this.y <= this.targetY || this.speed < 1) this.explode();
             } else {
                 this.particles.forEach(p => p.update());
                 this.particles = this.particles.filter(p => p.alpha > 0);
@@ -320,24 +366,18 @@
         }
         explode() {
             this.exploded = true;
-            // Forma de corazón
             for(let i=0; i<50; i++) {
                 const angle = (Math.PI * 2 * i) / 50;
-                // Ecuación del corazón
-                const r = 2; // velocidad
+                const r = 2;
                 const heartX = 16 * Math.pow(Math.sin(angle), 3);
                 const heartY = -(13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle));
-                
                 this.particles.push(new Particle(this.x, this.y, heartX * 0.5, heartY * 0.5, this.color));
             }
         }
         draw() {
             if(!this.exploded) {
-                ctx.fillStyle = this.color;
-                ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI*2); ctx.fill();
-            } else {
-                this.particles.forEach(p => p.draw());
-            }
+                ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI*2); ctx.fill();
+            } else { this.particles.forEach(p => p.draw()); }
         }
     }
 
@@ -346,20 +386,15 @@
             this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.color = color;
             this.alpha = 1; this.life = 0.01 + Math.random()*0.01;
         }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            this.vy += 0.05; // gravedad
-            this.alpha -= this.life;
-        }
+        update() { this.x += this.vx; this.y += this.vy; this.vy += 0.05; this.alpha -= this.life; }
         draw() {
-            ctx.globalAlpha = Math.max(0, this.alpha);
-            ctx.fillStyle = this.color;
+            ctx.globalAlpha = Math.max(0, this.alpha); ctx.fillStyle = this.color;
             ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
             ctx.globalAlpha = 1;
         }
     }
 
-    // --- FUNCIONES DE CONTROL ---
+    // --- FUNCIONES ---
 
     function startExperience() {
         document.getElementById('intro-screen').style.opacity = 0;
@@ -368,12 +403,7 @@
         document.getElementById('canvas').style.opacity = 1;
         document.getElementById('ui-layer').style.opacity = 1;
         
-        // Muestra el botón final después de 5 segundos
-        setTimeout(() => {
-            document.getElementById('love-btn').style.opacity = 1;
-        }, 5000);
-
-        // Música
+        setTimeout(() => { document.getElementById('love-btn').style.opacity = 1; }, 5000);
         document.getElementById('bgm').play().catch(e => console.log("Audio requires interaction"));
         
         gameState = 'playing';
@@ -387,21 +417,15 @@
         document.getElementById('ui-layer').style.opacity = 0;
         document.getElementById('love-btn').style.opacity = 0;
         document.getElementById('letter-container').style.display = 'flex';
-        
-        // Crear fuegos artificiales constantemente
-        setInterval(() => {
-            fuegosArtificiales.push(new Firework());
-        }, 800);
+        setInterval(() => { fuegosArtificiales.push(new Firework()); }, 800);
     }
 
-    // --- INPUTS ---
     canvas.addEventListener('mousedown', (e) => {
         if(gameState === 'finale') return;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Check flores
         let clicked = false;
         flores.forEach(f => {
             if(Math.hypot(x-f.x, y-f.y) < f.max) {
@@ -419,24 +443,25 @@
     function closeCard() { document.getElementById('message-card').classList.remove('active'); }
 
     // --- LOOP ---
-    // Estrellas fondo
     for(let i=0; i<100; i++) estrellas.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, s: Math.random()});
 
     function animate(t) {
-        // Fondo
-        ctx.fillStyle = '#050510';
+        // Fondo degradado nocturno
+        let grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#020111'); grad.addColorStop(1, '#191923');
+        ctx.fillStyle = grad;
         ctx.fillRect(0,0,width,height);
 
         // Luna
-        ctx.shadowBlur = 40; ctx.shadowColor = '#fff';
-        ctx.fillStyle = '#ffffe0';
-        ctx.beginPath(); ctx.arc(width-100, 100, 50, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 50; ctx.shadowColor = 'rgba(255, 255, 200, 0.5)';
+        ctx.fillStyle = '#FFFFF0';
+        ctx.beginPath(); ctx.arc(width-100, 100, 60, 0, Math.PI*2); ctx.fill();
         ctx.shadowBlur = 0;
 
         // Estrellas
         ctx.fillStyle = '#fff';
         estrellas.forEach(e => {
-            ctx.globalAlpha = Math.random();
+            ctx.globalAlpha = Math.random()*0.8 + 0.2;
             ctx.beginPath(); ctx.arc(e.x, e.y, e.s, 0, Math.PI*2); ctx.fill();
         });
         ctx.globalAlpha = 1;
@@ -447,18 +472,15 @@
         // Conejo
         if(conejo) conejo.draw();
 
-        // Fuegos Artificiales (Solo en finale)
+        // Fuegos Artificiales
         if(gameState === 'finale') {
             fuegosArtificiales.forEach((fw, i) => {
-                fw.update();
-                fw.draw();
+                fw.update(); fw.draw();
                 if(fw.exploded && fw.particles.length === 0) fuegosArtificiales.splice(i, 1);
             });
         }
-
         requestAnimationFrame(animate);
     }
-
 </script>
 </body>
 </html>
