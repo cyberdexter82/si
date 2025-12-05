@@ -64,13 +64,26 @@
             z-index: 200; overflow: hidden;
         }
 
+        /* IMAGEN DE FONDO PARA LA PREGUNTA */
+        #question-background {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            /* AQUÍ SE CARGA LA IMAGEN */
+            background-image: url('weeknd_flores.png'); 
+            background-size: cover;
+            background-position: center;
+            opacity: 0; /* Empieza invisible */
+            transition: opacity 2s ease-in;
+            z-index: -1; /* Detrás del texto */
+            filter: brightness(0.6); /* Un poco oscuro para que se lea la letra */
+        }
+
         /* Texto deslizante */
         #scrolling-text {
             color: #e0e0e0; text-align: center; font-family: 'Montserrat', sans-serif;
             font-size: 1.4rem; line-height: 2; max-width: 80%;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
             position: absolute; top: 100%;
-            /* AJUSTE DE TIEMPO: 60s para que de tiempo a escuchar la canción */
             animation: scrollUp 60s linear forwards; 
         }
         @keyframes scrollUp {
@@ -84,10 +97,14 @@
         #final-proposal {
             display: none; text-align: center; animation: fadeIn 2s forwards;
             position: relative; z-index: 300;
+            background: rgba(0,0,0,0.4); /* Fondo suave tras el texto */
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
         }
         .big-question {
-            font-family: 'Great Vibes', cursive; font-size: 4rem; color: #ff0055;
-            text-shadow: 0 0 30px rgba(255, 0, 85, 0.8); margin-bottom: 30px;
+            font-family: 'Great Vibes', cursive; font-size: 3.5rem; color: #ff0055;
+            text-shadow: 0 0 30px rgba(255, 0, 85, 0.8), 2px 2px 2px black; margin-bottom: 30px;
         }
         .btn-yes {
             background: white; color: black; padding: 15px 40px; border: none;
@@ -128,6 +145,8 @@
     </div>
 
     <div id="cinematic-layer">
+        <div id="question-background"></div>
+
         <div id="scrolling-text"></div>
         
         <div id="final-proposal">
@@ -150,11 +169,11 @@
     const CARTA = `
         Hola...<br><br>
         Quizás te sorprenda ver esto,<br>
-        Pero hay cosas que mi corazon quiza sepa decir mas por otras maneras que en las que se esperan<br><br>
+        Pero hay cosas que mi corazón quizá sepa decir más por otras maneras que en las que se esperan.<br><br>
         Desde que llegaste, mi mundo ha cambiado.<br>
-       Debo decir que aunque mi vida hay sido un completo cambio has alegrado toda mi vida en su completa forma.<br><br>
-        Se lo mucho que te gustan tus astromelias, ademas de otras cosas, me gusta aprender cada cosa de ti,<br>
-        Porque mientras mas profundo voy conociendote me da una necesidad entera de estar contigo a tu lado.<br>
+        Debo decir que aunque mi vida haya sido un completo cambio has alegrado toda mi vida en su completa forma.<br><br>
+        Sé lo mucho que te gustan tus astromelias, además de otras cosas, me gusta aprender cada cosa de ti,<br>
+        Porque mientras más profundo voy conociéndote me da una necesidad entera de estar contigo a tu lado.<br>
         A tu lado Mi amor.<br><br>
         Me encanta escuchar esta canción y pensar en ti.<br>
         Me encanta imaginar un futuro donde estemos juntos.<br><br>
@@ -166,18 +185,17 @@
         Faltas tú.<br><br>
         Así que, aquí va mi confesión más grande:<br><br>
         Eres mi todo.<br>
-        Y quiero que seas mi todo, y me encantaria que fueras totalmente mi todo al final.<br><br>
-
+        Y quiero que seas mi todo, y me encantaría que fueras totalmente mi todo al final.<br><br>
     `;
 
     // Mensajes aleatorios al tocar flores
     const MENSAJES = [
-        "Eres arte.", "Me encantas.", "Solo tengo ojos para ti.", "Me encantaria que fueras mi pareja",
+        "Eres arte.", "Me encantas.", "Solo tengo ojos para ti.", "Me encantaría que fueras mi pareja",
         "Astromelias para mi niña.", "I would die for you.", "Contigo todo es mejor."
     ];
 
     /* ================================================================
-       FIN DE ZONA DE EDICIÓN - NO TOCAR ABAJO SI NO SABES CÓDIGO
+       FIN DE ZONA DE EDICIÓN
        ================================================================ */
 
     document.getElementById('scrolling-text').innerHTML = CARTA;
@@ -348,6 +366,11 @@
         
         // Ajustado a 50 segundos para que coincida con la lectura de la carta
         setTimeout(() => {
+            // OCULTAR CARTA
+            document.getElementById('scrolling-text').style.display = 'none';
+            // MOSTRAR IMAGEN DE FONDO
+            document.getElementById('question-background').style.opacity = 1;
+            // MOSTRAR PREGUNTA
             document.getElementById('final-proposal').style.display = 'block';
         }, 50000); 
     }
