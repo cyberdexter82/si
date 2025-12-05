@@ -3,484 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Para Ti, Mi Todo</title>
+    <title>Solo Para Ti</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Parisienne&family=Montserrat:wght@300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;500&family=Great+Vibes&display=swap');
 
         body {
             margin: 0;
             overflow: hidden;
             background: #000;
             font-family: 'Montserrat', sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- PANTALLA DE INICIO (Heartbeat) --- */
+        /* --- UI ELEMENTS --- */
         #intro-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 500;
-            transition: opacity 2s;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 999; transition: opacity 2s ease-in-out;
         }
-        .heart-btn {
-            font-size: 4rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            animation: heartbeat 1.5s infinite;
-            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6));
-        }
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            15% { transform: scale(1.3); }
-            30% { transform: scale(1); }
-            45% { transform: scale(1.15); }
-            60% { transform: scale(1); }
-        }
-        .intro-text {
-            color: #fff;
-            margin-top: 20px;
-            opacity: 0.7;
-            letter-spacing: 2px;
-            font-size: 0.9rem;
-        }
-
-        /* --- CAPAS DEL JUEGO --- */
-        #canvas { display: block; opacity: 0; transition: opacity 3s; }
         
+        .play-btn {
+            background: transparent; border: 2px solid #ff0055; color: #ff0055;
+            padding: 15px 40px; font-size: 1.2rem; letter-spacing: 3px;
+            font-family: 'Cinzel', serif; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 0 15px #ff0055; text-transform: uppercase;
+        }
+        .play-btn:hover { background: #ff0055; color: white; box-shadow: 0 0 40px #ff0055; }
+
         #ui-layer {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            text-align: center;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 2s;
-            z-index: 10;
-        }
-        
-        /* Botón Mágico para el final */
-        #love-btn {
-            position: absolute;
-            bottom: 40px; /* Un poco más arriba para asegurar visibilidad */
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 30px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: white;
-            border-radius: 50px;
-            cursor: pointer;
-            font-family: 'Cinzel', serif;
-            letter-spacing: 2px;
-            pointer-events: auto;
-            backdrop-filter: blur(5px);
-            transition: all 0.5s;
-            opacity: 0; 
-            z-index: 20; /* Asegurar que esté sobre el canvas */
-        }
-        #love-btn:hover {
-            background: rgba(255, 105, 180, 0.4);
-            box-shadow: 0 0 30px #ff69b4;
-            transform: translateX(-50%) scale(1.05);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; opacity: 0; transition: opacity 3s; z-index: 10;
         }
 
-        /* --- LA CARTA (SCROLLING TEXT) --- */
-        #letter-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: none; 
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            overflow: hidden;
+        h1 {
+            font-family: 'Cinzel', serif; text-align: center; color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); margin-top: 30px;
+            font-size: 2rem; letter-spacing: 5px;
         }
+
+        /* --- BOTÓN DE CONFESIÓN --- */
+        #proposal-btn {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            padding: 15px 50px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; font-family: 'Montserrat', sans-serif; letter-spacing: 2px;
+            cursor: pointer; border-radius: 50px; pointer-events: auto;
+            transition: all 0.5s; opacity: 0; z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        #proposal-btn:hover {
+            border-color: #ff0055; color: #ff0055; box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
+        }
+
+        /* --- CAPA CINEMÁTICA --- */
+        #cinematic-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(20,0,10,0.95));
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 200; overflow: hidden;
+        }
+
+        /* Texto deslizante */
         #scrolling-text {
-            color: #fff;
-            text-align: center;
-            font-family: 'Parisienne', cursive;
-            font-size: 1.8rem;
-            line-height: 1.8;
-            max-width: 85%;
-            text-shadow: 0 0 10px rgba(255, 192, 203, 0.5);
-            position: absolute;
-            top: 100%; 
-            animation: scrollUp 45s linear forwards; 
+            color: #e0e0e0; text-align: center; font-family: 'Montserrat', sans-serif;
+            font-size: 1.4rem; line-height: 2; max-width: 80%;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            position: absolute; top: 100%;
+            /* AJUSTE DE TIEMPO: 60s para que de tiempo a escuchar la canción */
+            animation: scrollUp 60s linear forwards; 
         }
         @keyframes scrollUp {
             0% { top: 100%; opacity: 0; }
             10% { opacity: 1; }
-            85% { opacity: 1; }
-            100% { top: -200%; opacity: 0; }
+            80% { opacity: 1; }
+            100% { top: -250%; opacity: 0; } 
         }
 
-        /* Tarjeta de Mensajes Cortos */
+        /* La Gran Pregunta Final */
+        #final-proposal {
+            display: none; text-align: center; animation: fadeIn 2s forwards;
+            position: relative; z-index: 300;
+        }
+        .big-question {
+            font-family: 'Great Vibes', cursive; font-size: 4rem; color: #ff0055;
+            text-shadow: 0 0 30px rgba(255, 0, 85, 0.8); margin-bottom: 30px;
+        }
+        .btn-yes {
+            background: white; color: black; padding: 15px 40px; border: none;
+            font-size: 1.5rem; font-family: 'Cinzel', serif; cursor: pointer;
+            box-shadow: 0 0 20px white; transition: transform 0.2s;
+        }
+        .btn-yes:hover { transform: scale(1.1); box-shadow: 0 0 40px #ff0055; background: #ff0055; color: white;}
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        /* Tarjeta de Mensaje Simple */
         #message-card {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: rgba(20, 20, 40, 0.7);
-            backdrop-filter: blur(15px);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 300px;
-            pointer-events: auto;
-            z-index: 30;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px);
+            padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 30px rgba(255,0,85,0.2);
+            color: white; text-align: center; transition: all 0.3s; max-width: 300px; z-index: 50;
+            border-radius: 4px;
         }
         #message-card.active { transform: translate(-50%, -50%) scale(1); }
-        .close-card-btn {
-            margin-top: 20px; background: linear-gradient(45deg, #ff69b4, #ff8da1);
-            border: none; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer;
-            font-family: 'Montserrat', sans-serif;
-        }
+
     </style>
 </head>
 <body>
 
     <div id="intro-screen">
-        <button class="heart-btn" onclick="startExperience()">❤️</button>
-        <div class="intro-text">Toca el corazón para comenzar</div>
+        <button class="play-btn" onclick="startExperience()">Entrar</button>
+        <p style="color: #666; margin-top: 20px; font-size: 0.8rem;">(Usa audífonos para la experiencia completa)</p>
     </div>
 
     <div id="ui-layer">
-        <h1 style="font-family: 'Cinzel'; color: white; text-shadow: 0 0 15px rgba(255,105,180,0.7); font-size: 2.5rem;">Nuestro Mundo</h1>
+        <h1>XO</h1>
     </div>
-
-    <button id="love-btn" onclick="startFinale()">Leer mi corazón</button>
+    <button id="proposal-btn" onclick="startCinematicMode()">Tengo algo que decirte</button>
 
     <div id="message-card">
-        <p id="msg-content" style="font-size: 1.3rem; font-family: 'Parisienne', cursive;">...</p>
-        <button class="close-card-btn" onclick="closeCard()">Guardar</button>
+        <p id="msg-content" style="font-size: 1.1rem; letter-spacing: 1px; margin-bottom: 20px;">...</p>
+        <button onclick="document.getElementById('message-card').classList.remove('active')" style="background:transparent; border:1px solid #555; color:#aaa; padding:5px 15px; cursor:pointer;">Cerrar</button>
     </div>
 
-    <div id="letter-container">
+    <div id="cinematic-layer">
         <div id="scrolling-text"></div>
+        
+        <div id="final-proposal">
+            <div class="big-question">¿Quieres salir conmigo/ Ser algo solo tu y yo?</div>
+            <button class="btn-yes" onclick="sheSaidYes()">SÍ, ACEPTO</button>
+        </div>
     </div>
 
     <canvas id="canvas"></canvas>
 
     <audio id="bgm" loop>
-        <source src="https://cdn.pixabay.com/download/audio/2022/02/07/audio_13a30dd227.mp3?filename=piano-moment-11634.mp3" type="audio/mpeg">
+        <source src="Die For You.mp3" type="audio/mpeg">
     </audio>
 
 <script>
-    /* =========================================
-       ZONA DE PERSONALIZACIÓN (¡EDITA ESTO!)
-       ========================================= */
-    
-    // 1. TU CARTA DE AMOR (Usa <br> para saltos de línea)
-    const CARTA_AMOR = `
-        Mi amor en el poco tiempo que llevamos
-        Se que es una decision pronta mas sin embargo
-        Esto es lo que siento porti, siento amor y atraccion por ti
-        Eres lo mas lindo que me pudo haber toda, ademas de ser tu quien
-        Yo quiero para formar una familia, tener niños y ser tu y yo siempre
-        Te amo con todo mi corazon y ademas de sentir por ti se lo que eres
-        Y se que la gran niña que tienes en tu corazon es mas que perfecta
-        Te amo luci <3
+    /* ================================================================
+       ZONA DE EDICIÓN PERSONAL - ESCRIBE AQUÍ CON EL CORAZÓN
+       ================================================================ */
 
-        [De C.O]
+    const CARTA = `
+        Hola...<br><br>
+        Quizás te sorprenda ver esto,<br>
+        Pero hay cosas que mi corazon quiza sepa decir mas por otras maneras que en las que se esperan<br><br>
+        Desde que llegaste, mi mundo ha cambiado.<br>
+       Debo decir que aunque mi vida hay sido un completo cambio has alegrado toda mi vida en su completa forma.<br><br>
+        Se lo mucho que te gustan tus astromelias, ademas de otras cosas, me gusta aprender cada cosa de ti,<br>
+        Porque mientras mas profundo voy conociendote me da una necesidad entera de estar contigo a tu lado.<br>
+        A tu lado Mi amor.<br><br>
+        Me encanta escuchar esta canción y pensar en ti.<br>
+        Me encanta imaginar un futuro donde estemos juntos.<br><br>
+        No quería hacer una pregunta normal.<br>
+        Quería crear un universo donde solo existamos tú y yo.<br><br>
+        He programado cada flor, cada estrella y cada línea<br>
+        pensando en verte sonreír.<br><br>
+        Pero falta una variable para que mi código esté completo...<br>
+        Faltas tú.<br><br>
+        Así que, aquí va mi confesión más grande:<br><br>
+        Eres mi todo.<br>
+        Y quiero que seas mi todo, y me encantaria que fueras totalmente mi todo al final.<br><br>
+
     `;
 
-    // 2. MENSAJES DE LAS FLORES
-    const MENSAJES_FLORES = [
-        "Te amo.", "Eres perfecta.", "Mi casualidad favorita.",
-        "Siempre juntos.", "Me haces mejor persona.", "Tu risa es mi música.",
-        "Gracias por tanto.", "Eres mi hogar."
+    // Mensajes aleatorios al tocar flores
+    const MENSAJES = [
+        "Eres arte.", "Me encantas.", "Solo tengo ojos para ti.", "Me encantaria que fueras mi pareja",
+        "Astromelias para mi niña.", "I would die for you.", "Contigo todo es mejor."
     ];
 
-    /* =========================================
-       FIN DE ZONA DE PERSONALIZACIÓN
-       ========================================= */
+    /* ================================================================
+       FIN DE ZONA DE EDICIÓN - NO TOCAR ABAJO SI NO SABES CÓDIGO
+       ================================================================ */
 
-    document.getElementById('scrolling-text').innerHTML = CARTA_AMOR;
+    document.getElementById('scrolling-text').innerHTML = CARTA;
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let width, height;
-    let gameState = 'intro'; 
+    let gameState = 'intro';
+    let time = 0;
 
     let flores = [];
-    let fuegosArtificiales = [];
-    let estrellas = [];
+    let particulas = [];
     let conejo;
+
+    const PALETAS = [
+        { main: ['#ff0055', '#ff4d88'], inner: '#3d0014', glow: '#ff0055' }, // Weeknd Red
+        { main: ['#7df9ff', '#ffffff'], inner: '#003366', glow: '#7df9ff' }, // Electric Blue
+        { main: ['#9d00ff', '#e0b3ff'], inner: '#2e004d', glow: '#9d00ff' }, // Purple Rain
+        { main: ['#ffd700', '#fffacd'], inner: '#5c4d00', glow: '#ffd700' }  // Gold
+    ];
 
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        // --- CAMBIO: Conejo más arriba (0.75 en lugar de 0.85) ---
-        conejo = new Conejo(width/2, height * 0.75);
+        conejo = new Conejo(width/2, height * 0.80);
     }
     window.addEventListener('resize', resize);
-
-    // Paletas para las flores bonitas
-    const paletas = [
-        ['#ff0080', '#ff8c00'], // Sunset
-        ['#e0115f', '#ffffff'], // Rubí
-        ['#9932cc', '#dda0dd'], // Orquídea
-        ['#ffd700', '#ff4500']  // Gold
-    ];
 
     // --- CLASES ---
 
     class Conejo {
-        constructor(x, y) {
-            this.x = x; this.y = y; this.scale = 1;
-            this.lookAtMoon = false;
-        }
+        constructor(x, y) { this.x = x; this.y = y; this.dir = 1; }
         draw() {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            if(this.lookAtMoon) ctx.rotate(-0.2);
-            ctx.scale(this.scale, this.scale);
-            
-            // Sombra
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.beginPath(); ctx.ellipse(0, 50, 60, 15, 0,0,Math.PI*2); ctx.fill();
-
-            // Cuerpo (con gradiente suave)
-            let grad = ctx.createRadialGradient(0, 40, 10, 0, 40, 70);
-            grad.addColorStop(0, '#fff'); grad.addColorStop(1, '#e0e0e0');
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.ellipse(0, 40, 70, 55, 0,0,Math.PI*2); ctx.fill();
-            
-            // Cabeza
-            ctx.beginPath(); ctx.arc(0, -10, 50, 0, Math.PI*2); ctx.fill();
-
-            // Orejas
-            this.drawEar(-30, -50, -0.2);
-            this.drawEar(30, -50, 0.2);
-
-            // Cara
-            if(!this.lookAtMoon) {
-                ctx.fillStyle = '#ff5555'; // Nariz
-                ctx.beginPath(); ctx.arc(0, 5, 7, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#111'; // Ojos
-                ctx.beginPath(); ctx.arc(-20, -10, 6, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(20, -10, 6, 0, Math.PI*2); ctx.fill();
-                // Brillo ojos
-                ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(-18, -12, 2, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(22, -12, 2, 0, Math.PI*2); ctx.fill();
-                // Mejillas
-                ctx.fillStyle = 'rgba(255, 182, 193, 0.5)';
-                ctx.beginPath(); ctx.arc(-35, 10, 10, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(35, 10, 10, 0, Math.PI*2); ctx.fill();
+            ctx.save(); ctx.translate(this.x, this.y);
+            ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(0, 50, 50, 10, 0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.ellipse(0, 35, 60, 50, 0,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, -15, 45, 0, Math.PI*2); ctx.fill();
+            this.drawEar(-25, -50, -0.15); this.drawEar(25, -50, 0.15);
+            if(gameState !== 'cinematic') {
+                ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = '#111'; 
+                ctx.beginPath(); ctx.arc(-18, -15, 5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(18, -15, 5, 0, Math.PI*2); ctx.fill();
             } else {
-                ctx.fillStyle = 'pink'; // Colita
-                ctx.beginPath(); ctx.arc(0, 70, 15, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ffcccc'; ctx.beginPath(); ctx.arc(0, 60, 15, 0, Math.PI*2); ctx.fill(); 
             }
             ctx.restore();
         }
         drawEar(x, y, a) {
             ctx.save(); ctx.translate(x,y); ctx.rotate(a);
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.ellipse(0, -30, 15, 40, 0,0,Math.PI*2); ctx.fill();
-            ctx.fillStyle = 'pink';
-            ctx.beginPath(); ctx.ellipse(0, -30, 8, 35, 0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.ellipse(0, -30, 12, 35, 0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ffb6c1'; ctx.beginPath(); ctx.ellipse(0, -30, 6, 25, 0,0,Math.PI*2); ctx.fill();
             ctx.restore();
         }
     }
 
-    // --- CAMBIO: Clase Astromelia "Bonita" Restaurada ---
     class Astromelia {
         constructor(x, y) {
-            this.x = x; this.y = y; this.size = 0; this.max = 35 + Math.random()*25;
-            this.msg = MENSAJES_FLORES[Math.floor(Math.random()*MENSAJES_FLORES.length)];
-            this.colorPair = paletas[Math.floor(Math.random()*paletas.length)];
-            this.angle = (Math.random()-0.5)*0.3;
+            this.x = x; this.y = y; this.size = 0; this.max = 30 + Math.random()*25;
+            this.paleta = PALETAS[Math.floor(Math.random()*PALETAS.length)];
+            this.msg = MENSAJES[Math.floor(Math.random()*MENSAJES.length)];
+            this.angle = (Math.random()-0.5)*0.2;
+            this.swaySpeed = Math.random()*0.002 + 0.001;
         }
-        update() { if(this.size < this.max) this.size += (this.max - this.size)*0.08; }
+        update() { if(this.size < this.max) this.size += (this.max - this.size)*0.05; }
         draw(t) {
-            const wind = Math.sin(t*0.002 + this.x)*5;
-            ctx.save();
-            ctx.translate(this.x + wind, this.y);
-            
-            // Tallo
-            ctx.beginPath(); 
-            ctx.moveTo(-wind, height-this.y);
-            ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0);
-            ctx.strokeStyle = '#2d5a27'; ctx.lineWidth = this.size*0.1; ctx.stroke();
-            
-            ctx.rotate(wind*0.005 + this.angle);
-
-            // Glow effect
-            ctx.shadowBlur = 15; ctx.shadowColor = this.colorPair[0];
-
-            // Flor detallada
+            const wind = Math.sin(t * this.swaySpeed + this.x) * 10;
+            ctx.save(); ctx.translate(this.x + wind, this.y);
+            ctx.strokeStyle = '#1a3300'; ctx.lineWidth = this.size*0.08;
+            ctx.beginPath(); ctx.moveTo(-wind, height-this.y); 
+            ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0); ctx.stroke();
+            ctx.rotate(wind*0.002 + this.angle);
+            if(gameState === 'cinematic' || gameState === 'yes') {
+                ctx.shadowBlur = 15; ctx.shadowColor = this.paleta.glow;
+            }
             for(let i=0; i<6; i++) {
-                ctx.save(); ctx.rotate(i*Math.PI/3);
-                // Degradado del pétalo
-                let grad = ctx.createRadialGradient(0, -this.size, 0, 0, -this.size, this.size);
-                grad.addColorStop(0, this.colorPair[1]); grad.addColorStop(1, this.colorPair[0]);
-                ctx.fillStyle = grad;
-                
-                // Forma del pétalo
-                ctx.beginPath(); ctx.moveTo(0,0);
-                ctx.bezierCurveTo(this.size*0.5, -this.size*0.2, this.size*0.8, -this.size*1.5, 0, -this.size*2);
-                ctx.bezierCurveTo(-this.size*0.8, -this.size*1.5, -this.size*0.5, -this.size*0.2, 0, 0);
-                ctx.fill();
-                
-                // Manchas (tigrado) en pétalos internos
-                if(i%2!==0) {
-                    ctx.fillStyle = '#330000';
-                    for(let k=0; k<5; k++) {
-                        ctx.beginPath();
-                        ctx.ellipse(0, -this.size*(0.5+Math.random()*0.5), this.size*0.02, this.size*0.06, 0,0,Math.PI*2);
-                        ctx.fill();
-                    }
-                }
+                ctx.save(); ctx.rotate(i * Math.PI / 3);
+                this.drawPetal(i % 2 !== 0);
                 ctx.restore();
             }
             ctx.shadowBlur = 0;
+            ctx.fillStyle = '#440000'; ctx.beginPath(); ctx.arc(0,0, this.size*0.1, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.5;
+            for(let j=0; j<5; j++) {
+                ctx.beginPath(); ctx.moveTo(0,0);
+                ctx.lineTo((Math.random()-0.5)*this.size, -this.size*0.6); ctx.stroke();
+            }
             ctx.restore();
         }
-    }
-
-    class Firework {
-        constructor() {
-            this.x = Math.random() * width; this.y = height;
-            this.targetY = Math.random() * height * 0.5;
-            this.speed = 10 + Math.random()*5;
-            this.color = `hsl(${Math.random()*360}, 100%, 70%)`;
-            this.exploded = false; this.particles = [];
-        }
-        update() {
-            if(!this.exploded) {
-                this.y -= this.speed; this.speed *= 0.98;
-                if(this.y <= this.targetY || this.speed < 1) this.explode();
+        drawPetal(isInner) {
+            let s = this.size;
+            let grad = ctx.createLinearGradient(0, 0, 0, -s*1.5);
+            if(isInner) {
+                grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, this.paleta.main[0]); grad.addColorStop(1, this.paleta.main[1]);
             } else {
-                this.particles.forEach(p => p.update());
-                this.particles = this.particles.filter(p => p.alpha > 0);
+                grad.addColorStop(0, this.paleta.main[0]); grad.addColorStop(1, this.paleta.main[1]);
             }
-        }
-        explode() {
-            this.exploded = true;
-            for(let i=0; i<50; i++) {
-                const angle = (Math.PI * 2 * i) / 50;
-                const r = 2;
-                const heartX = 16 * Math.pow(Math.sin(angle), 3);
-                const heartY = -(13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle));
-                this.particles.push(new Particle(this.x, this.y, heartX * 0.5, heartY * 0.5, this.color));
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.moveTo(0,0);
+            ctx.bezierCurveTo(s*0.6, -s*0.5, s*0.8, -s*1.5, 0, -s*2); 
+            ctx.bezierCurveTo(-s*0.8, -s*1.5, -s*0.6, -s*0.5, 0, 0); ctx.fill();
+            if(isInner) {
+                ctx.fillStyle = this.paleta.inner;
+                for(let k=0; k<8; k++) {
+                    let spotX = (Math.random()-0.5) * s * 0.5;
+                    let spotY = -Math.random() * s * 1.2 - 10;
+                    ctx.beginPath(); ctx.ellipse(spotX, spotY, s*0.02, s*0.08, 0, 0, Math.PI*2); ctx.fill();
+                }
             }
-        }
-        draw() {
-            if(!this.exploded) {
-                ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI*2); ctx.fill();
-            } else { this.particles.forEach(p => p.draw()); }
         }
     }
 
     class Particle {
-        constructor(x, y, vx, vy, color) {
-            this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.color = color;
-            this.alpha = 1; this.life = 0.01 + Math.random()*0.01;
+        constructor(isRain = false) { this.reset(isRain); }
+        reset(isRain) {
+            this.x = Math.random() * width;
+            this.y = isRain ? -10 : Math.random() * height;
+            this.speed = isRain ? Math.random()*10 + 5 : Math.random()*0.5;
+            this.size = Math.random() * 2;
+            this.color = isRain ? '#ff0055' : '#fff'; 
+            this.isRain = isRain;
+            this.alpha = Math.random();
         }
-        update() { this.x += this.vx; this.y += this.vy; this.vy += 0.05; this.alpha -= this.life; }
+        update() {
+            this.y += this.speed;
+            if(this.y > height) this.reset(this.isRain);
+            if(!this.isRain) this.alpha -= 0.005;
+            if(this.alpha <= 0) this.reset(this.isRain);
+        }
         draw() {
-            ctx.globalAlpha = Math.max(0, this.alpha); ctx.fillStyle = this.color;
-            ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            if(this.isRain) ctx.fillRect(this.x, this.y, 1, 10);
+            else ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
             ctx.globalAlpha = 1;
         }
     }
 
-    // --- FUNCIONES ---
-
     function startExperience() {
         document.getElementById('intro-screen').style.opacity = 0;
-        setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; }, 2000);
-        
-        document.getElementById('canvas').style.opacity = 1;
+        setTimeout(() => document.getElementById('intro-screen').style.display = 'none', 2000);
         document.getElementById('ui-layer').style.opacity = 1;
+        setTimeout(() => document.getElementById('proposal-btn').style.opacity = 1, 4000);
         
-        setTimeout(() => { document.getElementById('love-btn').style.opacity = 1; }, 5000);
-        document.getElementById('bgm').play().catch(e => console.log("Audio requires interaction"));
-        
-        gameState = 'playing';
+        var audio = document.getElementById('bgm');
+        audio.volume = 0.5;
+        audio.play().catch(e => console.log("Interacción requerida"));
+
+        gameState = 'garden';
         resize();
-        animate(0);
+        initParticles();
+        animate();
     }
 
-    function startFinale() {
-        gameState = 'finale';
-        conejo.lookAtMoon = true;
+    function initParticles() {
+        for(let i=0; i<100; i++) particulas.push(new Particle(false));
+    }
+
+    function startCinematicMode() {
+        gameState = 'cinematic';
         document.getElementById('ui-layer').style.opacity = 0;
-        document.getElementById('love-btn').style.opacity = 0;
-        document.getElementById('letter-container').style.display = 'flex';
-        setInterval(() => { fuegosArtificiales.push(new Firework()); }, 800);
+        document.getElementById('proposal-btn').style.opacity = 0;
+        document.getElementById('cinematic-layer').style.display = 'flex';
+        
+        particulas = [];
+        for(let i=0; i<150; i++) particulas.push(new Particle(true));
+        
+        // Ajustado a 50 segundos para que coincida con la lectura de la carta
+        setTimeout(() => {
+            document.getElementById('final-proposal').style.display = 'block';
+        }, 50000); 
     }
 
-    canvas.addEventListener('mousedown', (e) => {
-        if(gameState === 'finale') return;
+    function sheSaidYes() {
+        gameState = 'yes';
+        document.getElementById('final-proposal').innerHTML = "<h1 style='font-size:4rem; color:#fff; text-shadow:0 0 50px #ff0055'>¡TE AMO!</h1>";
+        for(let i=0; i<50; i++) {
+            setTimeout(() => {
+                flores.push(new Astromelia(Math.random()*width, height + Math.random()*200));
+            }, i*100);
+        }
+    }
+
+    canvas.addEventListener('mousedown', handleClick);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleClick(e.touches[0]); }, {passive:false});
+
+    function handleClick(e) {
+        if(gameState === 'cinematic') return; 
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
-        let clicked = false;
-        flores.forEach(f => {
+        for(let f of flores) {
             if(Math.hypot(x-f.x, y-f.y) < f.max) {
                 document.getElementById('msg-content').innerText = f.msg;
                 document.getElementById('message-card').classList.add('active');
-                clicked = true;
+                return;
             }
-        });
-
-        if(!clicked && y > height*0.5) {
-            flores.push(new Astromelia(x, y));
         }
-    });
+        if(y > height*0.6) flores.push(new Astromelia(x, y));
+    }
 
-    function closeCard() { document.getElementById('message-card').classList.remove('active'); }
-
-    // --- LOOP ---
-    for(let i=0; i<100; i++) estrellas.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, s: Math.random()});
-
-    function animate(t) {
-        // Fondo degradado nocturno
-        let grad = ctx.createLinearGradient(0, 0, 0, height);
-        grad.addColorStop(0, '#020111'); grad.addColorStop(1, '#191923');
-        ctx.fillStyle = grad;
+    function animate() {
+        time++;
+        if(gameState === 'garden') {
+            let grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, '#0a0a12'); grad.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = grad;
+        } else {
+            let grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, '#1a0005'); grad.addColorStop(1, '#33000f'); 
+            ctx.fillStyle = grad;
+        }
         ctx.fillRect(0,0,width,height);
 
-        // Luna
-        ctx.shadowBlur = 50; ctx.shadowColor = 'rgba(255, 255, 200, 0.5)';
-        ctx.fillStyle = '#FFFFF0';
-        ctx.beginPath(); ctx.arc(width-100, 100, 60, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Estrellas
-        ctx.fillStyle = '#fff';
-        estrellas.forEach(e => {
-            ctx.globalAlpha = Math.random()*0.8 + 0.2;
-            ctx.beginPath(); ctx.arc(e.x, e.y, e.s, 0, Math.PI*2); ctx.fill();
-        });
-        ctx.globalAlpha = 1;
-
-        // Flores
-        flores.forEach(f => { f.update(); f.draw(t); });
-
-        // Conejo
-        if(conejo) conejo.draw();
-
-        // Fuegos Artificiales
-        if(gameState === 'finale') {
-            fuegosArtificiales.forEach((fw, i) => {
-                fw.update(); fw.draw();
-                if(fw.exploded && fw.particles.length === 0) fuegosArtificiales.splice(i, 1);
-            });
+        if(gameState === 'cinematic' || gameState === 'yes') {
+            ctx.shadowBlur = 50; ctx.shadowColor = '#ff0000';
+            ctx.fillStyle = '#ff3333';
+            ctx.beginPath(); ctx.arc(width-100, 100, 60, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
+            ctx.fillRect(width-100 - 10, 100 - 40, 20, 80);
+            ctx.fillRect(width-100 - 30, 100 - 10, 60, 20);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.shadowBlur = 50; ctx.shadowColor = '#ffffcc';
+            ctx.fillStyle = '#ffffee';
+            ctx.beginPath(); ctx.arc(width-100, 100, 50, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
         }
+
+        particulas.forEach(p => { p.update(); p.draw(); });
+        flores.forEach(f => { f.update(); f.draw(time); });
+        if(conejo) conejo.draw();
         requestAnimationFrame(animate);
     }
+    resize();
 </script>
 </body>
 </html>
