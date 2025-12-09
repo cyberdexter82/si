@@ -45,16 +45,23 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; align-items: center; justify-content: flex-start;
             z-index: 200; pointer-events: none; padding-top: 50px;
+            background: rgba(0,0,0,0.8); 
         }
-        #question-background {
+
+        /* IMAGEN DE FONDO (Etiqueta IMG real) */
+        #bg-image-real {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('weeknd_flores.png'); background-size: cover; background-position: center;
-            opacity: 0; transition: opacity 3s ease-in; z-index: 5; filter: brightness(0.5);
+            object-fit: cover; 
+            opacity: 0; 
+            transition: opacity 3s ease-in; 
+            z-index: 1; /* Nivel 1: Detrás del texto */
+            filter: brightness(0.6);
         }
 
         .letter-part {
             color: #fff; text-align: center; font-size: 1.3rem; max-width: 85%; margin-bottom: 30px;
             opacity: 0; transform: translateY(20px); transition: all 1s; text-shadow: 0 0 10px black;
+            position: relative; z-index: 10; 
         }
         .letter-part.visible { opacity: 1; transform: translateY(0); }
 
@@ -108,7 +115,8 @@
     </div>
 
     <div id="cinematic-layer">
-        <div id="question-background"></div>
+        <img id="bg-image-real" src="weeknd_flores.png" alt="Weeknd Background">
+        
         <div class="letter-part" id="part1"></div>
         <div class="letter-part" id="part2"></div>
         <div class="letter-part" id="part3"></div>
@@ -128,26 +136,25 @@
 <script>
     /* ================= ZONA DE EDICIÓN ================= */
 
-    // 1. TUS FOTOS Y RECUERDOS (Asegúrate que los nombres de archivo coincidan)
+    // 1. TUS FOTOS (Corregido a .jpg)
     const MEMORY_STARS = [
         { img: 'foto1.jpg', caption: "Nuestro primer día." },
         { img: 'foto2.jpg', caption: "Esa vez que no parábamos de reír." },
         { img: 'foto3.jpg', caption: "Simplemente tú." }
     ];
 
-    // 2. TU CARTA DIVIDIDA EN 3 PARTES (Para el minijuego)
+    // 2. TU CARTA
     const CARTA_PARTES = [
         "Hola mi amor... He creado este pequeño mundo digital porque el real a veces no alcanza para mostrarte todo lo que siento.",
         "Me encanta cómo iluminas todo, como estas flores. Me encanta que seas compleja y hermosa como las astromelias. Me encanta que seas tú.",
         "Ya no quiero solo imaginar un futuro juntos, quiero construirlo. Por eso, tengo una pregunta muy importante..."
     ];
 
-    // 3. MENSAJES DE FLORES NORMALES
+    // 3. MENSAJES
     const MENSAJES = ["Eres magia.", "Pienso en ti.", "Mi persona favorita.", "Gracias por estar aquí."];
 
     /* ================= FIN ZONA DE EDICIÓN ================= */
 
-    // Configurar carta
     document.getElementById('part1').innerHTML = CARTA_PARTES[0];
     document.getElementById('part2').innerHTML = CARTA_PARTES[1];
     document.getElementById('part3').innerHTML = CARTA_PARTES[2];
@@ -155,16 +162,14 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let width, height;
-    let gameState = 'intro'; // intro, garden, minigame, finale, yes
+    let gameState = 'intro';
     let time = 0;
 
-    // Objetos del mundo
     let flores = [], particulas = [], memoryStarsObjs = [], fallingFlowers = [];
     let conejo;
     let gameScore = 0;
     let mouseX = 0, mouseY = 0;
 
-    // Paletas
     const PALETAS = [
         { main: ['#ff0055', '#ff4d88'], inner: '#3d0014', glow: '#ff0055' },
         { main: ['#7df9ff', '#ffffff'], inner: '#003366', glow: '#7df9ff' },
@@ -184,7 +189,6 @@
         constructor(x, y) { this.x = x; this.y = y; this.targetX = x; }
         update() {
             if(gameState === 'minigame') {
-                // El conejo sigue al mouse/dedo en el minijuego
                 this.targetX = mouseX;
                 this.x += (this.targetX - this.x) * 0.1;
             }
@@ -271,7 +275,6 @@
         }
     }
 
-    // --- LÓGICA DEL JUEGO ---
     function startExperience() {
         document.getElementById('intro-screen').style.opacity = 0;
         setTimeout(() => document.getElementById('intro-screen').style.display = 'none', 1000);
@@ -294,7 +297,6 @@
         document.getElementById('ui-layer').style.opacity = 0;
         document.getElementById('main-btn').style.opacity = 0;
         document.getElementById('cinematic-layer').style.display = 'flex';
-        // Iniciar spawn de flores doradas
         setInterval(() => { if(gameState==='minigame' && gameScore < 3) fallingFlowers.push(new FallingFlower()); }, 2000);
     }
 
@@ -303,7 +305,6 @@
             if(!f.collected && Math.hypot(f.x - conejo.x, f.y - conejo.y) < 80) {
                 f.collected = true;
                 gameScore++;
-                // Revelar parte de la carta
                 document.getElementById(`part${gameScore}`).classList.add('visible');
                 if(gameScore === 3) {
                     setTimeout(startFinale, 4000);
@@ -314,12 +315,11 @@
 
     function startFinale() {
         gameState = 'finale';
-        document.getElementById('question-background').style.opacity = 1;
+        document.getElementById('bg-image-real').style.opacity = 1; 
         document.getElementById('final-proposal').style.display = 'block';
         initNoButton();
     }
 
-    // --- EL BOTÓN DE "NO" ESCURRIDIZO ---
     function initNoButton() {
         const btnNo = document.getElementById('btn-no');
         const moveBtn = () => {
@@ -332,7 +332,7 @@
         };
         btnNo.addEventListener('mouseover', moveBtn);
         btnNo.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
-        btnNo.addEventListener('click', moveBtn); // Por si acaso logran darle click
+        btnNo.addEventListener('click', moveBtn); 
     }
 
     function sheSaidYes() {
@@ -341,7 +341,6 @@
         for(let i=0; i<100; i++) { setTimeout(() => { flores.push(new Astromelia(Math.random()*width, height + Math.random()*200)); }, i*50); }
     }
 
-    // --- INPUTS ---
     window.addEventListener('mousemove', e => mouseX = e.clientX);
     window.addEventListener('touchmove', e => mouseX = e.touches[0].clientX);
 
@@ -350,19 +349,16 @@
         if(gameState !== 'garden') return;
         const x = e.clientX, y = e.clientY;
         
-        // Click en estrella de recuerdo
         for(let s of memoryStarsObjs) {
             if(Math.hypot(x-s.x, y-s.y) < s.size*2) {
                 showPhoto(s.data); return;
             }
         }
-        // Click en flor existente
         for(let f of flores) {
             if(Math.hypot(x-f.x, y-f.y) < f.max) {
                 showMessage(f.msg); return;
             }
         }
-        // Plantar flor
         if(y > height*0.6) flores.push(new Astromelia(x, y));
     }
 
@@ -377,11 +373,9 @@
         document.getElementById('message-card').classList.add('active');
     }
 
-    // --- LOOP PRINCIPAL ---
     function animate() {
         time++; ctx.clearRect(0,0,width,height);
         
-        // Fondo según estado
         if(gameState === 'garden' || gameState === 'minigame') {
              ctx.fillStyle = '#0a0a12'; ctx.fillRect(0,0,width,height);
              particulas.forEach(p => { ctx.fillStyle='rgba(255,255,255,'+p.a+')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill(); });
@@ -396,10 +390,6 @@
             conejo.update(); conejo.draw();
             fallingFlowers.forEach(f => { f.update(); f.draw(); });
             checkMinigameCollisions();
-        }
-        
-        if(gameState === 'finale' || gameState === 'yes') {
-             // La imagen de fondo se encarga del CSS
         }
         
         if(gameState === 'yes') {
