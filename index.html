@@ -2,246 +2,201 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solo Para Ti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nuestra Historia</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;500&family=Great+Vibes&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;500;700&family=Great+Vibes&display=swap');
 
         body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            font-family: 'Montserrat', sans-serif;
+            margin: 0; overflow: hidden; background: #000; font-family: 'Montserrat', sans-serif; touch-action: none;
         }
 
-        /* --- UI ELEMENTS --- */
-        #intro-screen {
+        /* --- PANTALLAS Y CAPAS --- */
+        #intro-screen, #photo-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #050505;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 999; transition: opacity 2s ease-in-out;
+            background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 999; transition: opacity 1s ease-in-out;
         }
-        
-        .play-btn {
+        #photo-modal { background: rgba(0,0,0,0.9); z-index: 800; opacity: 0; pointer-events: none;}
+        #photo-modal.active { opacity: 1; pointer-events: auto; }
+        #photo-container img { max-width: 90%; max-height: 60vh; border: 3px solid #fff; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        #photo-caption { color: white; margin-top: 15px; font-size: 1.2rem; }
+
+        .play-btn, .close-btn {
             background: transparent; border: 2px solid #ff0055; color: #ff0055;
-            padding: 15px 40px; font-size: 1.2rem; letter-spacing: 3px;
-            font-family: 'Cinzel', serif; cursor: pointer; transition: all 0.3s;
-            box-shadow: 0 0 15px #ff0055; text-transform: uppercase;
+            padding: 10px 30px; font-size: 1rem; letter-spacing: 2px; font-family: 'Cinzel', serif; 
+            cursor: pointer; transition: all 0.3s; margin-top: 20px;
         }
-        .play-btn:hover { background: #ff0055; color: white; box-shadow: 0 0 40px #ff0055; }
+        .play-btn:hover, .close-btn:hover { background: #ff0055; color: white; box-shadow: 0 0 20px #ff0055; }
 
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; opacity: 0; transition: opacity 3s; z-index: 10;
-        }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; opacity: 0; transition: opacity 2s; z-index: 10; }
+        h1 { font-family: 'Cinzel', serif; text-align: center; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.5); margin-top: 30px; font-size: 2rem; }
 
-        h1 {
-            font-family: 'Cinzel', serif; text-align: center; color: #fff;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); margin-top: 30px;
-            font-size: 2rem; letter-spacing: 5px;
-        }
-
-        /* --- BOTÓN DE CONFESIÓN --- */
-        #proposal-btn {
+        #main-btn {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            padding: 15px 50px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white; font-family: 'Montserrat', sans-serif; letter-spacing: 2px;
-            cursor: pointer; border-radius: 50px; pointer-events: auto;
-            transition: all 0.5s; opacity: 0; z-index: 100;
-            backdrop-filter: blur(5px);
+            padding: 15px 40px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.5);
+            color: white; font-family: 'Montserrat', sans-serif; letter-spacing: 1px; cursor: pointer;
+            border-radius: 50px; pointer-events: auto; transition: all 0.5s; opacity: 0; z-index: 100; backdrop-filter: blur(5px);
         }
-        #proposal-btn:hover {
-            border-color: #ff0055; color: #ff0055; box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
-        }
+        #main-btn:hover { border-color: #ff0055; color: #ff0055; box-shadow: 0 0 30px rgba(255,0,85,0.4); }
 
-        /* --- CAPA CINEMÁTICA --- */
+        /* --- CAPA CINEMÁTICA / MINIJUEGO --- */
         #cinematic-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(20,0,10,0.95));
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 200; overflow: hidden;
+            display: none; flex-direction: column; align-items: center; justify-content: flex-start;
+            z-index: 200; pointer-events: none; padding-top: 50px;
         }
-
-        /* IMAGEN DE FONDO PARA LA PREGUNTA */
         #question-background {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            /* AQUÍ SE CARGA LA IMAGEN */
-            background-image: url('weeknd_flores.png'); 
-            background-size: cover;
-            background-position: center;
-            opacity: 0; /* Empieza invisible */
-            transition: opacity 2s ease-in;
-            z-index: 5; /* Detrás del texto */
-            filter: brightness(0.6); /* Un poco oscuro para que se lea la letra */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('weeknd_flores.png'); background-size: cover; background-position: center;
+            opacity: 0; transition: opacity 3s ease-in; z-index: 5; filter: brightness(0.5);
         }
 
-        /* Texto deslizante */
-        #scrolling-text {
-            color: #e0e0e0; text-align: center; font-family: 'Montserrat', sans-serif;
-            font-size: 1.4rem; line-height: 2; max-width: 80%;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-            position: absolute; top: 100%;
-            animation: scrollUp 60s linear forwards; 
+        .letter-part {
+            color: #fff; text-align: center; font-size: 1.3rem; max-width: 85%; margin-bottom: 30px;
+            opacity: 0; transform: translateY(20px); transition: all 1s; text-shadow: 0 0 10px black;
         }
-        @keyframes scrollUp {
-            0% { top: 100%; opacity: 0; }
-            10% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { top: -250%; opacity: 0; } 
-        }
+        .letter-part.visible { opacity: 1; transform: translateY(0); }
 
-        /* La Gran Pregunta Final */
+        /* --- PROPUESTA FINAL --- */
         #final-proposal {
-            display: none; text-align: center; animation: fadeIn 2s forwards;
-            position: relative; z-index: 300;
-            background: rgba(0,0,0,0.4); /* Fondo suave tras el texto */
-            padding: 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(5px);
+            display: none; text-align: center; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); z-index: 300; width: 100%; pointer-events: none;
         }
         .big-question {
             font-family: 'Great Vibes', cursive; font-size: 3.5rem; color: #ff0055;
-            text-shadow: 0 0 30px rgba(255, 0, 85, 0.8), 2px 2px 2px black; margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(255,0,85,0.8), 2px 2px 4px black; margin-bottom: 40px;
         }
-        .btn-yes {
-            background: white; color: black; padding: 15px 40px; border: none;
-            font-size: 1.5rem; font-family: 'Cinzel', serif; cursor: pointer;
-            box-shadow: 0 0 20px white; transition: transform 0.2s;
+        .buttons-container { display: flex; justify-content: center; gap: 20px; pointer-events: auto; position: relative; height: 60px; }
+        .btn-final {
+            padding: 12px 30px; border: none; font-size: 1.2rem; font-family: 'Cinzel', serif;
+            cursor: pointer; border-radius: 5px; transition: 0.3s; position: absolute;
         }
-        .btn-yes:hover { transform: scale(1.1); box-shadow: 0 0 40px #ff0055; background: #ff0055; color: white;}
+        .btn-yes { background: white; color: black; box-shadow: 0 0 20px white; left: 50%; transform: translateX(-120%); }
+        .btn-yes:hover { background: #ff0055; color: white; box-shadow: 0 0 40px #ff0055; }
+        .btn-no { background: #333; color: #777; left: 50%; transform: translateX(20%); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-
-        /* Tarjeta de Mensaje Simple */
+        /* Mensajes flotantes */
         #message-card {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px);
-            padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 30px rgba(255,0,85,0.2);
-            color: white; text-align: center; transition: all 0.3s; max-width: 300px; z-index: 50;
-            border-radius: 4px;
+            background: rgba(10,10,10,0.9); backdrop-filter: blur(10px); padding: 25px;
+            border: 1px solid rgba(255,255,255,0.2); color: white; text-align: center;
+            transition: 0.3s; max-width: 80%; z-index: 50; border-radius: 10px;
         }
         #message-card.active { transform: translate(-50%, -50%) scale(1); }
-
     </style>
 </head>
 <body>
 
     <div id="intro-screen">
-        <button class="play-btn" onclick="startExperience()">Entrar</button>
-        <p style="color: #666; margin-top: 20px; font-size: 0.8rem;">(Usa audífonos para la experiencia completa)</p>
+        <button class="play-btn" onclick="startExperience()">Comenzar Experiencia</button>
+        <p style="color: #888; margin-top: 20px; font-size: 0.9rem;">(Usa audífonos. Activa sonido.)</p>
     </div>
 
-    <div id="ui-layer">
-        <h1>XO</h1>
+    <div id="photo-modal">
+        <div id="photo-container"><img id="modal-img" src=""></div>
+        <div id="photo-caption"></div>
+        <button class="close-btn" onclick="closePhoto()">Cerrar</button>
     </div>
-    <button id="proposal-btn" onclick="startCinematicMode()">Tengo algo que decirte</button>
+
+    <div id="ui-layer"><h1>Nuestro Universo</h1></div>
+    <button id="main-btn" onclick="startMinigame()">Tengo una misión para ti</button>
 
     <div id="message-card">
-        <p id="msg-content" style="font-size: 1.1rem; letter-spacing: 1px; margin-bottom: 20px;">...</p>
-        <button onclick="document.getElementById('message-card').classList.remove('active')" style="background:transparent; border:1px solid #555; color:#aaa; padding:5px 15px; cursor:pointer;">Cerrar</button>
+        <p id="msg-content"></p>
+        <button class="close-btn" onclick="document.getElementById('message-card').classList.remove('active')" style="margin-top:10px; padding: 5px 20px; font-size: 0.8rem;">ok</button>
     </div>
 
     <div id="cinematic-layer">
         <div id="question-background"></div>
-
-        <div id="scrolling-text"></div>
+        <div class="letter-part" id="part1"></div>
+        <div class="letter-part" id="part2"></div>
+        <div class="letter-part" id="part3"></div>
         
         <div id="final-proposal">
-            <div class="big-question">¿Quieres salir conmigo/ Ser algo solo tu y yo?</div>
-            <button class="btn-yes" onclick="sheSaidYes()">SÍ, ACEPTO</button>
+            <div class="big-question">¿Quieres ser mi novia?</div>
+            <div class="buttons-container">
+                <button class="btn-final btn-yes" onclick="sheSaidYes()">SÍ, ACEPTO</button>
+                <button class="btn-final btn-no" id="btn-no">NO</button>
+            </div>
         </div>
     </div>
 
     <canvas id="canvas"></canvas>
-
-    <audio id="bgm" loop>
-        <source src="Die For You.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bgm" loop><source src="Die For You.mp3" type="audio/mpeg"></audio>
 
 <script>
-    /* ================================================================
-       ZONA DE EDICIÓN PERSONAL - ESCRIBE AQUÍ CON EL CORAZÓN
-       ================================================================ */
+    /* ================= ZONA DE EDICIÓN ================= */
 
-    const CARTA = `
-        Hola...<br><br>
-        Quizás te sorprenda ver esto,<br>
-        Pero hay cosas que mi corazón quizá sepa decir más por otras maneras que en las que se esperan.<br><br>
-        Desde que llegaste, mi mundo ha cambiado.<br>
-        Debo decir que aunque mi vida haya sido un completo cambio has alegrado toda mi vida en su completa forma.<br><br>
-        Sé lo mucho que te gustan tus astromelias, además de otras cosas, me gusta aprender cada cosa de ti,<br>
-        Porque mientras más profundo voy conociéndote me da una necesidad entera de estar contigo a tu lado.<br>
-        A tu lado Mi amor.<br><br>
-        Me encanta escuchar esta canción y pensar en ti.<br>
-        Me encanta imaginar un futuro donde estemos juntos.<br><br>
-        No quería hacer una pregunta normal.<br>
-        Quería crear un universo donde solo existamos tú y yo.<br><br>
-        He programado cada flor, cada estrella y cada línea<br>
-        pensando en verte sonreír.<br><br>
-        Pero falta una variable para que mi código esté completo...<br>
-        Faltas tú.<br><br>
-        Así que, aquí va mi confesión más grande:<br><br>
-        Eres mi todo.<br>
-        Y quiero que seas mi todo, y me encantaría que fueras totalmente mi todo al final.<br><br>
-    `;
-
-    // Mensajes aleatorios al tocar flores
-    const MENSAJES = [
-        "Eres arte.", "Me encantas.", "Solo tengo ojos para ti.", "Me encantaría que fueras mi pareja",
-        "Astromelias para mi niña.", "I would die for you.", "Contigo todo es mejor."
+    // 1. TUS FOTOS Y RECUERDOS (Asegúrate que los nombres de archivo coincidan)
+    const MEMORY_STARS = [
+        { img: 'foto1.jpg', caption: "Nuestro primer día." },
+        { img: 'foto2.jpg', caption: "Esa vez que no parábamos de reír." },
+        { img: 'foto3.jpg', caption: "Simplemente tú." }
     ];
 
-    /* ================================================================
-       FIN DE ZONA DE EDICIÓN
-       ================================================================ */
+    // 2. TU CARTA DIVIDIDA EN 3 PARTES (Para el minijuego)
+    const CARTA_PARTES = [
+        "Hola mi amor... He creado este pequeño mundo digital porque el real a veces no alcanza para mostrarte todo lo que siento.",
+        "Me encanta cómo iluminas todo, como estas flores. Me encanta que seas compleja y hermosa como las astromelias. Me encanta que seas tú.",
+        "Ya no quiero solo imaginar un futuro juntos, quiero construirlo. Por eso, tengo una pregunta muy importante..."
+    ];
 
-    document.getElementById('scrolling-text').innerHTML = CARTA;
+    // 3. MENSAJES DE FLORES NORMALES
+    const MENSAJES = ["Eres magia.", "Pienso en ti.", "Mi persona favorita.", "Gracias por estar aquí."];
+
+    /* ================= FIN ZONA DE EDICIÓN ================= */
+
+    // Configurar carta
+    document.getElementById('part1').innerHTML = CARTA_PARTES[0];
+    document.getElementById('part2').innerHTML = CARTA_PARTES[1];
+    document.getElementById('part3').innerHTML = CARTA_PARTES[2];
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let width, height;
-    let gameState = 'intro';
+    let gameState = 'intro'; // intro, garden, minigame, finale, yes
     let time = 0;
 
-    let flores = [];
-    let particulas = [];
+    // Objetos del mundo
+    let flores = [], particulas = [], memoryStarsObjs = [], fallingFlowers = [];
     let conejo;
+    let gameScore = 0;
+    let mouseX = 0, mouseY = 0;
 
+    // Paletas
     const PALETAS = [
-        { main: ['#ff0055', '#ff4d88'], inner: '#3d0014', glow: '#ff0055' }, // Weeknd Red
-        { main: ['#7df9ff', '#ffffff'], inner: '#003366', glow: '#7df9ff' }, // Electric Blue
-        { main: ['#9d00ff', '#e0b3ff'], inner: '#2e004d', glow: '#9d00ff' }, // Purple Rain
-        { main: ['#ffd700', '#fffacd'], inner: '#5c4d00', glow: '#ffd700' }  // Gold
+        { main: ['#ff0055', '#ff4d88'], inner: '#3d0014', glow: '#ff0055' },
+        { main: ['#7df9ff', '#ffffff'], inner: '#003366', glow: '#7df9ff' },
+        { main: ['#9d00ff', '#e0b3ff'], inner: '#2e004d', glow: '#9d00ff' },
+        { main: ['#ffd700', '#fffacd'], inner: '#5c4d00', glow: '#ffd700' }
     ];
 
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        conejo = new Conejo(width/2, height * 0.80);
+        conejo = new Conejo(width/2, height * 0.85);
     }
     window.addEventListener('resize', resize);
 
     // --- CLASES ---
-
     class Conejo {
-        constructor(x, y) { this.x = x; this.y = y; this.dir = 1; }
+        constructor(x, y) { this.x = x; this.y = y; this.targetX = x; }
+        update() {
+            if(gameState === 'minigame') {
+                // El conejo sigue al mouse/dedo en el minijuego
+                this.targetX = mouseX;
+                this.x += (this.targetX - this.x) * 0.1;
+            }
+        }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y);
             ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(0, 50, 50, 10, 0,0,Math.PI*2); ctx.fill();
             ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.ellipse(0, 35, 60, 50, 0,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(0, -15, 45, 0, Math.PI*2); ctx.fill();
             this.drawEar(-25, -50, -0.15); this.drawEar(25, -50, 0.15);
-            if(gameState !== 'cinematic') {
-                ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); 
-                ctx.fillStyle = '#111'; 
-                ctx.beginPath(); ctx.arc(-18, -15, 5, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(18, -15, 5, 0, Math.PI*2); ctx.fill();
-            } else {
-                ctx.fillStyle = '#ffcccc'; ctx.beginPath(); ctx.arc(0, 60, 15, 0, Math.PI*2); ctx.fill(); 
-            }
+            ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-18, -15, 5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(18, -15, 5, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
         drawEar(x, y, a) {
@@ -252,188 +207,205 @@
         }
     }
 
+    class MemoryStar {
+        constructor(data) {
+            this.x = Math.random() * width; this.y = Math.random() * height * 0.6;
+            this.size = 15 + Math.random()*10; this.data = data;
+            this.pulse = Math.random()*Math.PI;
+        }
+        draw(t) {
+            this.pulse += 0.05;
+            let s = this.size + Math.sin(this.pulse)*5;
+            ctx.save(); ctx.translate(this.x, this.y);
+            ctx.shadowBlur = 20; ctx.shadowColor = '#ffff00';
+            ctx.fillStyle = '#fff'; ctx.beginPath();
+            for(let i=0; i<5; i++) { ctx.rotate(Math.PI*2/5); ctx.lineTo(0, -s); ctx.lineTo(s*0.4, -s*0.4); }
+            ctx.fill(); ctx.restore();
+        }
+    }
+
+    class FallingFlower {
+        constructor() {
+            this.x = Math.random() * width; this.y = -50; this.speed = 3 + Math.random()*4;
+            this.size = 30; this.collected = false;
+        }
+        update() { this.y += this.speed; }
+        draw() {
+            if(this.collected) return;
+            ctx.save(); ctx.translate(this.x, this.y);
+            ctx.shadowBlur = 30; ctx.shadowColor = 'gold';
+            ctx.fillStyle = 'gold';
+            for(let i=0; i<6; i++) { ctx.rotate(Math.PI/3); ctx.beginPath(); ctx.ellipse(0, -20, 10, 25, 0,0,Math.PI*2); ctx.fill(); }
+            ctx.restore();
+        }
+    }
+
     class Astromelia {
         constructor(x, y) {
             this.x = x; this.y = y; this.size = 0; this.max = 30 + Math.random()*25;
             this.paleta = PALETAS[Math.floor(Math.random()*PALETAS.length)];
             this.msg = MENSAJES[Math.floor(Math.random()*MENSAJES.length)];
             this.angle = (Math.random()-0.5)*0.2;
-            this.swaySpeed = Math.random()*0.002 + 0.001;
         }
         update() { if(this.size < this.max) this.size += (this.max - this.size)*0.05; }
         draw(t) {
-            const wind = Math.sin(t * this.swaySpeed + this.x) * 10;
+            const wind = Math.sin(t*0.003 + this.x)*10;
             ctx.save(); ctx.translate(this.x + wind, this.y);
             ctx.strokeStyle = '#1a3300'; ctx.lineWidth = this.size*0.08;
-            ctx.beginPath(); ctx.moveTo(-wind, height-this.y); 
-            ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-wind, height-this.y); ctx.quadraticCurveTo(0, (height-this.y)/2, 0, 0); ctx.stroke();
             ctx.rotate(wind*0.002 + this.angle);
-            if(gameState === 'cinematic' || gameState === 'yes') {
-                ctx.shadowBlur = 15; ctx.shadowColor = this.paleta.glow;
-            }
-            for(let i=0; i<6; i++) {
-                ctx.save(); ctx.rotate(i * Math.PI / 3);
-                this.drawPetal(i % 2 !== 0);
-                ctx.restore();
-            }
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#440000'; ctx.beginPath(); ctx.arc(0,0, this.size*0.1, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.5;
-            for(let j=0; j<5; j++) {
-                ctx.beginPath(); ctx.moveTo(0,0);
-                ctx.lineTo((Math.random()-0.5)*this.size, -this.size*0.6); ctx.stroke();
-            }
+            if(gameState === 'finale' || gameState === 'yes') { ctx.shadowBlur = 15; ctx.shadowColor = this.paleta.glow; }
+            for(let i=0; i<6; i++) { ctx.save(); ctx.rotate(i*Math.PI/3); this.drawPetal(i%2!==0); ctx.restore(); }
+            ctx.shadowBlur=0; ctx.fillStyle='#440000'; ctx.beginPath(); ctx.arc(0,0,this.size*0.1,0,Math.PI*2); ctx.fill();
             ctx.restore();
         }
         drawPetal(isInner) {
-            let s = this.size;
-            let grad = ctx.createLinearGradient(0, 0, 0, -s*1.5);
-            if(isInner) {
-                grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, this.paleta.main[0]); grad.addColorStop(1, this.paleta.main[1]);
-            } else {
-                grad.addColorStop(0, this.paleta.main[0]); grad.addColorStop(1, this.paleta.main[1]);
-            }
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.moveTo(0,0);
-            ctx.bezierCurveTo(s*0.6, -s*0.5, s*0.8, -s*1.5, 0, -s*2); 
-            ctx.bezierCurveTo(-s*0.8, -s*1.5, -s*0.6, -s*0.5, 0, 0); ctx.fill();
+            let s = this.size; let grad = ctx.createLinearGradient(0,0,0,-s*1.5);
+            grad.addColorStop(0, isInner?'#fff':this.paleta.main[0]); grad.addColorStop(1, this.paleta.main[1]);
+            ctx.fillStyle = grad; ctx.beginPath(); ctx.moveTo(0,0);
+            ctx.bezierCurveTo(s*0.6,-s*0.5,s*0.8,-s*1.5,0,-s*2); ctx.bezierCurveTo(-s*0.8,-s*1.5,-s*0.6,-s*0.5,0,0); ctx.fill();
             if(isInner) {
                 ctx.fillStyle = this.paleta.inner;
-                for(let k=0; k<8; k++) {
-                    let spotX = (Math.random()-0.5) * s * 0.5;
-                    let spotY = -Math.random() * s * 1.2 - 10;
-                    ctx.beginPath(); ctx.ellipse(spotX, spotY, s*0.02, s*0.08, 0, 0, Math.PI*2); ctx.fill();
-                }
+                for(let k=0;k<5;k++) { ctx.beginPath(); ctx.ellipse((Math.random()-0.5)*s*0.5, -Math.random()*s*1.2-10, s*0.02, s*0.08,0,0,Math.PI*2); ctx.fill(); }
             }
         }
     }
 
-    class Particle {
-        constructor(isRain = false) { this.reset(isRain); }
-        reset(isRain) {
-            this.x = Math.random() * width;
-            this.y = isRain ? -10 : Math.random() * height;
-            this.speed = isRain ? Math.random()*10 + 5 : Math.random()*0.5;
-            this.size = Math.random() * 2;
-            this.color = isRain ? '#ff0055' : '#fff'; 
-            this.isRain = isRain;
-            this.alpha = Math.random();
-        }
-        update() {
-            this.y += this.speed;
-            if(this.y > height) this.reset(this.isRain);
-            if(!this.isRain) this.alpha -= 0.005;
-            if(this.alpha <= 0) this.reset(this.isRain);
-        }
-        draw() {
-            ctx.globalAlpha = this.alpha;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            if(this.isRain) ctx.fillRect(this.x, this.y, 1, 10);
-            else ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-    }
-
+    // --- LÓGICA DEL JUEGO ---
     function startExperience() {
         document.getElementById('intro-screen').style.opacity = 0;
-        setTimeout(() => document.getElementById('intro-screen').style.display = 'none', 2000);
+        setTimeout(() => document.getElementById('intro-screen').style.display = 'none', 1000);
         document.getElementById('ui-layer').style.opacity = 1;
-        setTimeout(() => document.getElementById('proposal-btn').style.opacity = 1, 4000);
-        
-        var audio = document.getElementById('bgm');
-        audio.volume = 0.5;
-        audio.play().catch(e => console.log("Interacción requerida"));
-
+        setTimeout(() => document.getElementById('main-btn').style.opacity = 1, 3000);
+        document.getElementById('bgm').play().catch(() => {});
         gameState = 'garden';
         resize();
-        initParticles();
+        initGarden();
         animate();
     }
 
-    function initParticles() {
-        for(let i=0; i<100; i++) particulas.push(new Particle(false));
+    function initGarden() {
+        for(let i=0; i<100; i++) particulas.push({x:Math.random()*width, y:Math.random()*height, s:Math.random()*2, a:Math.random()});
+        MEMORY_STARS.forEach(data => memoryStarsObjs.push(new MemoryStar(data)));
     }
 
-    function startCinematicMode() {
-        gameState = 'cinematic';
+    function startMinigame() {
+        gameState = 'minigame';
         document.getElementById('ui-layer').style.opacity = 0;
-        document.getElementById('proposal-btn').style.opacity = 0;
+        document.getElementById('main-btn').style.opacity = 0;
         document.getElementById('cinematic-layer').style.display = 'flex';
-        
-        particulas = [];
-        for(let i=0; i<150; i++) particulas.push(new Particle(true));
-        
-        // Ajustado a 50 segundos para que coincida con la lectura de la carta
-        setTimeout(() => {
-            // OCULTAR CARTA
-            document.getElementById('scrolling-text').style.display = 'none';
-            // MOSTRAR IMAGEN DE FONDO
-            document.getElementById('question-background').style.opacity = 1;
-            // MOSTRAR PREGUNTA
-            document.getElementById('final-proposal').style.display = 'block';
-        }, 50000); 
+        // Iniciar spawn de flores doradas
+        setInterval(() => { if(gameState==='minigame' && gameScore < 3) fallingFlowers.push(new FallingFlower()); }, 2000);
+    }
+
+    function checkMinigameCollisions() {
+        fallingFlowers.forEach(f => {
+            if(!f.collected && Math.hypot(f.x - conejo.x, f.y - conejo.y) < 80) {
+                f.collected = true;
+                gameScore++;
+                // Revelar parte de la carta
+                document.getElementById(`part${gameScore}`).classList.add('visible');
+                if(gameScore === 3) {
+                    setTimeout(startFinale, 4000);
+                }
+            }
+        });
+    }
+
+    function startFinale() {
+        gameState = 'finale';
+        document.getElementById('question-background').style.opacity = 1;
+        document.getElementById('final-proposal').style.display = 'block';
+        initNoButton();
+    }
+
+    // --- EL BOTÓN DE "NO" ESCURRIDIZO ---
+    function initNoButton() {
+        const btnNo = document.getElementById('btn-no');
+        const moveBtn = () => {
+            const newX = Math.random() * (width - 100);
+            const newY = Math.random() * (height - 100);
+            btnNo.style.position = 'fixed';
+            btnNo.style.left = newX + 'px';
+            btnNo.style.top = newY + 'px';
+            btnNo.style.transform = 'none';
+        };
+        btnNo.addEventListener('mouseover', moveBtn);
+        btnNo.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
+        btnNo.addEventListener('click', moveBtn); // Por si acaso logran darle click
     }
 
     function sheSaidYes() {
         gameState = 'yes';
-        document.getElementById('final-proposal').innerHTML = "<h1 style='font-size:4rem; color:#fff; text-shadow:0 0 50px #ff0055'>¡TE AMO!</h1>";
-        for(let i=0; i<50; i++) {
-            setTimeout(() => {
-                flores.push(new Astromelia(Math.random()*width, height + Math.random()*200));
-            }, i*100);
-        }
+        document.getElementById('final-proposal').innerHTML = "<h1 style='font-size:4rem; color:#fff; text-shadow:0 0 50px #ff0055'>¡SABÍA QUE SÍ! ❤️</h1>";
+        for(let i=0; i<100; i++) { setTimeout(() => { flores.push(new Astromelia(Math.random()*width, height + Math.random()*200)); }, i*50); }
     }
 
-    canvas.addEventListener('mousedown', handleClick);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleClick(e.touches[0]); }, {passive:false});
+    // --- INPUTS ---
+    window.addEventListener('mousemove', e => mouseX = e.clientX);
+    window.addEventListener('touchmove', e => mouseX = e.touches[0].clientX);
 
+    canvas.addEventListener('click', handleClick);
     function handleClick(e) {
-        if(gameState === 'cinematic') return; 
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        for(let f of flores) {
-            if(Math.hypot(x-f.x, y-f.y) < f.max) {
-                document.getElementById('msg-content').innerText = f.msg;
-                document.getElementById('message-card').classList.add('active');
-                return;
+        if(gameState !== 'garden') return;
+        const x = e.clientX, y = e.clientY;
+        
+        // Click en estrella de recuerdo
+        for(let s of memoryStarsObjs) {
+            if(Math.hypot(x-s.x, y-s.y) < s.size*2) {
+                showPhoto(s.data); return;
             }
         }
+        // Click en flor existente
+        for(let f of flores) {
+            if(Math.hypot(x-f.x, y-f.y) < f.max) {
+                showMessage(f.msg); return;
+            }
+        }
+        // Plantar flor
         if(y > height*0.6) flores.push(new Astromelia(x, y));
     }
 
+    function showPhoto(data) {
+        document.getElementById('modal-img').src = data.img;
+        document.getElementById('photo-caption').innerText = data.caption;
+        document.getElementById('photo-modal').classList.add('active');
+    }
+    function closePhoto() { document.getElementById('photo-modal').classList.remove('active'); }
+    function showMessage(txt) {
+        document.getElementById('msg-content').innerText = txt;
+        document.getElementById('message-card').classList.add('active');
+    }
+
+    // --- LOOP PRINCIPAL ---
     function animate() {
-        time++;
+        time++; ctx.clearRect(0,0,width,height);
+        
+        // Fondo según estado
+        if(gameState === 'garden' || gameState === 'minigame') {
+             ctx.fillStyle = '#0a0a12'; ctx.fillRect(0,0,width,height);
+             particulas.forEach(p => { ctx.fillStyle='rgba(255,255,255,'+p.a+')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill(); });
+        }
+        
         if(gameState === 'garden') {
-            let grad = ctx.createLinearGradient(0, 0, 0, height);
-            grad.addColorStop(0, '#0a0a12'); grad.addColorStop(1, '#1a1a2e');
-            ctx.fillStyle = grad;
-        } else {
-            let grad = ctx.createLinearGradient(0, 0, 0, height);
-            grad.addColorStop(0, '#1a0005'); grad.addColorStop(1, '#33000f'); 
-            ctx.fillStyle = grad;
-        }
-        ctx.fillRect(0,0,width,height);
-
-        if(gameState === 'cinematic' || gameState === 'yes') {
-            ctx.shadowBlur = 50; ctx.shadowColor = '#ff0000';
-            ctx.fillStyle = '#ff3333';
-            ctx.beginPath(); ctx.arc(width-100, 100, 60, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = 'rgba(0,0,0,0.2)'; 
-            ctx.fillRect(width-100 - 10, 100 - 40, 20, 80);
-            ctx.fillRect(width-100 - 30, 100 - 10, 60, 20);
-            ctx.shadowBlur = 0;
-        } else {
-            ctx.shadowBlur = 50; ctx.shadowColor = '#ffffcc';
-            ctx.fillStyle = '#ffffee';
-            ctx.beginPath(); ctx.arc(width-100, 100, 50, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0;
+            memoryStarsObjs.forEach(s => s.draw(time));
+            flores.forEach(f => { f.update(); f.draw(time); });
         }
 
-        particulas.forEach(p => { p.update(); p.draw(); });
-        flores.forEach(f => { f.update(); f.draw(time); });
-        if(conejo) conejo.draw();
+        if(gameState === 'minigame') {
+            conejo.update(); conejo.draw();
+            fallingFlowers.forEach(f => { f.update(); f.draw(); });
+            checkMinigameCollisions();
+        }
+        
+        if(gameState === 'finale' || gameState === 'yes') {
+             // La imagen de fondo se encarga del CSS
+        }
+        
+        if(gameState === 'yes') {
+             flores.forEach(f => { f.update(); f.draw(time); });
+        }
+
         requestAnimationFrame(animate);
     }
     resize();
